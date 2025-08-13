@@ -86,6 +86,21 @@ hotfix/修正内容
 5. `main -> develop` のPRを作成しバックマージ（hotfixも同様に main の変更を取り込む）
 6. マージ後は `release/*` ブランチを削除（Actionsのcleanupで自動削除）
 
+### バージョニング/タグ付け 重要ルール（忘れ防止）
+
+- リリース/ホットフィックスを`main`へマージする前に、必ず`package.json`の`version`を対象バージョン（例: 1.2.3）へ更新してコミットする
+  - タグは`main`の`package.json`を参照して自動生成されるため、バージョン未更新だとタグが付与されない
+- タグは`main`へのpushをトリガーに自動作成される（`vX.Y.Z`）。手動でタグ作成は不要
+- ワークフロー定義（`.github/workflows/auto-tag-on-main.yml`）は`main`上の内容が実行される。ブランチ側で修正した場合は、先に`main`へ取り込むこと
+
+### ホットフィックス チェックリスト
+
+1. `hotfix/x.y.z-内容` ブランチを作成
+2. 変更をコミット（必要に応じてセキュリティ/設定のハードコーディング排除）
+3. `package.json` の `version` を `x.y.z` に更新してコミット
+4. PR: `hotfix/x.y.z -> main`（`--no-ff`）
+5. マージ後に自動で `vX.Y.Z` タグ付与、ブランチはcleanupで自動削除
+
 ## CI/CD トリガー
 
 - CI: PR（`develop`, `main`）および push（`feature/**`, `release/**`, `hotfix/**`）で実行
