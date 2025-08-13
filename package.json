@@ -4,8 +4,11 @@
   "description": "A beautiful dashboard application that fetches data from Tableau data sources",
   "main": "site/index.html",
   "scripts": {
-    "dev": "npx http-server site -p 3000 -o",
-    "start": "npx http-server site -p 3000",
+    "dev": "npx http-server site -p 3000 -o -c-1",
+    "start": "npx http-server site -p 3000 -c-1",
+    "data:fetch": "node scripts/tableau_fetch_by_luid.mjs 94d2aa4c-d4a4-4328-8cee-2f60334d96e9 ALL",
+    "data:enhance": "node scripts/enhance_latest_data.mjs",
+    "data:update": "npm run -s data:fetch && npm run -s data:enhance",
     "build": "echo 'No build step required for vanilla JS'",
     "test": "echo 'No tests specified'",
     "deploy": "git push origin main",

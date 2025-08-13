@@ -71,34 +71,44 @@ async function loadDashboardData() {
     try {
         console.log('データ読み込み開始...');
         
-        // まずlatest.jsonを試す
-        console.log('latest.jsonを読み込み中...');
+        // まずenhanced_latest.jsonを試す
+        console.log('enhanced_latest.jsonを読み込み中...');
+        const enhancedLatestResponse = await fetch('data/enhanced_latest.json');
+        if (enhancedLatestResponse.ok) {
+            console.log('enhanced_latest.json読み込み成功');
+            dashboardData = await enhancedLatestResponse.json();
+            updateLastUpdated('enhanced_latest.json');
+            renderDashboard();
+        } else {
+            console.log('enhanced_latest.json読み込み失敗、latest.jsonを試行...');
+            // フォールバック: latest.json
         const response = await fetch('data/latest.json');
         if (response.ok) {
             console.log('latest.json読み込み成功');
             dashboardData = await response.json();
-            updateLastUpdated();
+                updateLastUpdated('latest.json');
             renderDashboard();
         } else {
-            console.log('latest.json読み込み失敗、enhanced_sample.jsonを試行...');
-            // フォールバック: enhanced_sample.json
-            const enhancedSampleResponse = await fetch('data/enhanced_sample.json');
-            if (enhancedSampleResponse.ok) {
-                console.log('enhanced_sample.json読み込み成功');
-                dashboardData = await enhancedSampleResponse.json();
-                updateLastUpdated('enhanced_sample.json');
-                renderDashboard();
-            } else {
-                console.log('enhanced_sample.json読み込み失敗、sample.jsonを試行...');
-                // フォールバック: sample.json
-                const sampleResponse = await fetch('data/sample.json');
-                if (sampleResponse.ok) {
-                    console.log('sample.json読み込み成功');
-                    dashboardData = await sampleResponse.json();
-                    updateLastUpdated('sample.json');
+                console.log('latest.json読み込み失敗、enhanced_sample.jsonを試行...');
+                // フォールバック: enhanced_sample.json
+                const enhancedSampleResponse = await fetch('data/enhanced_sample.json');
+                if (enhancedSampleResponse.ok) {
+                    console.log('enhanced_sample.json読み込み成功');
+                    dashboardData = await enhancedSampleResponse.json();
+                    updateLastUpdated('enhanced_sample.json');
                     renderDashboard();
                 } else {
-                    throw new Error('データファイルが見つかりません');
+                    console.log('enhanced_sample.json読み込み失敗、sample.jsonを試行...');
+            // フォールバック: sample.json
+            const sampleResponse = await fetch('data/sample.json');
+            if (sampleResponse.ok) {
+                console.log('sample.json読み込み成功');
+                dashboardData = await sampleResponse.json();
+                updateLastUpdated('sample.json');
+                renderDashboard();
+            } else {
+                throw new Error('データファイルが見つかりません');
+                    }
                 }
             }
         }
@@ -1064,7 +1074,7 @@ function renderRegionCharts(regionData) {
     // 地域別利益分布チャート
     const profitChart = echarts.init(document.getElementById('region-profit-chart'));
     profitChart.setOption({
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         xAxis: { type: 'category', data: regions.map(r => r.name) },
         yAxis: { type: 'value', name: '利益' },
         series: [{
@@ -1108,7 +1118,7 @@ function renderRegionCharts(regionData) {
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         legend: { data: regions.map(r => r.name) },
         xAxis: { type: 'category', data: ['Consumer', 'Corporate', 'Home Office'] },
-        yAxis: { type: 'value', name: '売上' },
+		yAxis: { type: 'value', name: '売上' },
         series: regions.map(region => ({
             name: region.name,
             type: 'bar',
