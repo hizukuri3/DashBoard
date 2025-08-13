@@ -29,6 +29,10 @@
 5. タグ `vX.Y.Z` 作成・push
 6. `release/x.y.z` を `develop` にマージバック、ブランチ削除
 
+## ブランチクリーンアップ
+- PRが「merged」でクローズされたら、自動で`feature/*` `release/*` `hotfix/*` のリモートブランチを削除（`cleanup-branches.yml`）
+- ローカルは各自 `git fetch --prune` を定期実行
+
 ## データ運用
 - 大容量データは Git LFS 管理（`site/data/*.json`）
 - 自動取得・拡張: `npm run data:update`
