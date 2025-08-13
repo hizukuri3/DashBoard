@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superstore BI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .page { display: none; }
+        .page.active { display: block; }
+        .nav-item.active { 
+            background-color: rgb(59 130 246); 
+            color: white; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <h1 class="text-2xl font-bold text-gray-900">Superstore BI Dashboard</h1>
+                <div class="text-sm text-gray-500">
+                    <span id="last-updated">最終更新: --</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ナビゲーション -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active" data-page="overview">
+                    オーバービュー
+                </button>
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="geography">
+                    地域分析
+                </button>
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="products">
+                    製品分析
+                </button>
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="customers">
+                    顧客分析
+                </button>
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="time">
+                    時間分析
+                </button>
+                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="operations">
+                    配送・運営
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- オーバービューページ -->
+        <div id="overview" class="page active">
+            <!-- KPI セクション -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900">総売上</h3>
+                    <p class="text-3xl font-bold text-blue-600" id="total-sales">--</p>
+                    <p class="text-sm text-gray-500">前年同期比: <span id="sales-yoy">--</span></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900">総利益</h3>
+                    <p class="text-3xl font-bold text-green-600" id="total-profit">--</p>
+                    <p class="text-sm text-gray-500">前年同期比: <span id="profit-yoy">--</span></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900">注文数</h3>
+                    <p class="text-3xl font-bold text-purple-600" id="total-orders">--</p>
+                    <p class="text-sm text-gray-500">前年同期比: <span id="orders-yoy">--</span></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900">利益率</h3>
+                    <p class="text-3xl font-bold text-orange-600" id="profit-margin">--</p>
+                    <p class="text-sm text-gray-500">前年同期比: <span id="margin-yoy">--</span></p>
+                </div>
+            </div>
+
+            <!-- チャートセクション -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">月次売上・利益トレンド</h3>
+                    <div id="monthly-trend-chart" class="h-80"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">地域別売上分布</h3>
+                    <div id="geography-chart" class="h-80"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ別売上・利益</h3>
+                    <div id="category-chart" class="h-80"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">顧客セグメント別分布</h3>
+                    <div id="segment-chart" class="h-80"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地域分析ページ -->
+        <div id="geography" class="page">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">地域分析</h2>
+                <p class="text-gray-600">地域別の詳細分析を表示します</p>
+            </div>
+        </div>
+
+        <!-- 製品分析ページ -->
+        <div id="products" class="page">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">製品分析</h2>
+                <p class="text-gray-600">製品カテゴリの詳細分析を表示します</p>
+            </div>
+        </div>
+
+        <!-- 顧客分析ページ -->
+        <div id="customers" class="page">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">顧客分析</h2>
+                <p class="text-gray-600">顧客セグメントの詳細分析を表示します</p>
+            </div>
+        </div>
+
+        <!-- 時間分析ページ -->
+        <div id="time" class="page">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">時間分析</h2>
+                <p class="text-gray-600">時間軸での詳細分析を表示します</p>
+            </div>
+        </div>
+
+        <!-- 配送・運営ページ -->
+        <div id="operations" class="page">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">配送・運営</h2>
+                <p class="text-gray-600">配送・運営の詳細分析を表示します</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/app.js"></script>
+</body>
+</html>

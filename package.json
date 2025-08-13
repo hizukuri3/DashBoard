@@ -1,0 +1,45 @@
+{
+  "name": "superstore-dashboard",
+  "version": "1.0.0",
+  "description": "A beautiful dashboard application that fetches data from Tableau data sources",
+  "main": "site/index.html",
+  "scripts": {
+    "dev": "npx http-server site -p 3000 -o",
+    "start": "npx http-server site -p 3000",
+    "build": "echo 'No build step required for vanilla JS'",
+    "test": "echo 'No tests specified'",
+    "deploy": "git push origin main",
+    "lint": "echo 'No linting configured'",
+    "format": "prettier --write '**/*.{js,html,css,md,json}'"
+  },
+  "keywords": [
+    "dashboard",
+    "tableau",
+    "data-visualization",
+    "analytics",
+    "web-app"
+  ],
+  "author": "hizukuri",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hizukuri3/SuperstoreDashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hizukuri3/SuperstoreDashboard/issues"
+  },
+  "homepage": "https://hizukuri3.github.io/SuperstoreDashboard",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
