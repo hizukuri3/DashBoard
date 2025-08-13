@@ -1,7 +1,3 @@
-# Large/generated data files
-site/data/latest.json
-site/data/enhanced_latest.json
-
 # OS / editor
 .DS_Store
 *.log
