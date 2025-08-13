@@ -34,17 +34,20 @@
         </div>
     </header>
 
-    <!-- ツールバー（タブ＋主要コントロール） -->
+    <!-- ツールバー（主要コントロール） -->
     <div class="bg-white shadow-sm border-b sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <div class="flex items-center justify-between gap-3">
-                <div class="flex space-x-1 overflow-x-auto">
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active" data-page="overview">オーバービュー</button>
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="geography">地域分析</button>
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="products">製品分析</button>
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="customers">顧客分析</button>
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="time">時間分析</button>
-                    <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="operations">配送・運営</button>
+                <div class="flex items-center space-x-2 md:hidden">
+                    <label for="page-select-mobile" class="text-sm text-gray-600">ページ</label>
+                    <select id="page-select-mobile" class="px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="overview">オーバービュー</option>
+                        <option value="geography">地域分析</option>
+                        <option value="products">製品分析</option>
+                        <option value="customers">顧客分析</option>
+                        <option value="time">時間分析</option>
+                        <option value="operations">配送・運営</option>
+                    </select>
                 </div>
                 <div class="flex items-center space-x-3">
                     <div class="hidden md:flex items-center space-x-2">
@@ -77,8 +80,22 @@
         </div>
     </div>
 
-    <!-- メインコンテンツ -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- 左ペイン付きレイアウト -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+        <!-- サイドナビ（md以上で表示） -->
+        <aside class="hidden md:block w-56 flex-shrink-0">
+            <div class="card p-3 sticky top-20 space-y-2">
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active" data-page="overview">オーバービュー</button>
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="geography">地域分析</button>
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="products">製品分析</button>
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="customers">顧客分析</button>
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="time">時間分析</button>
+                <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="operations">配送・運営</button>
+            </div>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main class="flex-1">
         <!-- オーバービューページ -->
         <div id="overview" class="page active">
             <!-- KPI セクション -->
@@ -385,8 +402,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script src="assets/app.js?v=enhanced-latest-2"></script>
 </body>

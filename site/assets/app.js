@@ -12,13 +12,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ナビゲーション初期化
 function initializeNavigation() {
+    const bind = () => {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', function() {
             const targetPage = this.getAttribute('data-page');
             switchPage(targetPage);
         });
+        });
+        const select = document.getElementById('page-select-mobile');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                switchPage(e.target.value);
     });
+        }
+    };
+    bind();
 }
 
 // ページ切り替え
@@ -224,7 +233,7 @@ function renderOverviewCharts() {
         window.__echartsThemeRegistered = true;
     }
     const useTheme = 'dashboard';
-
+    
     renderMonthlyTrendChart();
     renderGeographyChart();
     renderCategoryChart();
