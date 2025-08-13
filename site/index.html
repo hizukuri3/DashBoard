@@ -46,7 +46,7 @@
   <body class="bg-gray-50">
     <!-- ヘッダー -->
     <header class="bg-white shadow-sm border-b">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <h1 class="text-2xl font-bold text-gray-900">
             Superstore BI Dashboard
@@ -60,7 +60,7 @@
 
     <!-- ツールバー（主要コントロール） -->
     <div class="bg-white shadow-sm border-b sticky top-0 z-30">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center space-x-2 md:hidden">
             <label for="page-select-mobile" class="text-sm text-gray-600"
@@ -84,7 +84,7 @@
     </div>
 
     <!-- 左ペイン付きレイアウト -->
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
       <!-- サイドナビ（md以上で表示） -->
       <aside class="hidden md:block w-60 flex-shrink-0">
         <div class="card p-3 sticky top-20 space-y-3 overflow-hidden">
@@ -166,45 +166,50 @@
       <main class="flex-1">
         <!-- オーバービューページ -->
         <div id="overview" class="page active">
-          <!-- KPI セクション -->
-          <div
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-          >
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
-              <p class="text-3xl font-bold text-blue-600" id="total-sales">
-                --
-              </p>
-              <p class="text-sm text-gray-500">
-                YoY: <span id="sales-yoy">--</span>
-              </p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900">Total Profit</h3>
-              <p class="text-3xl font-bold text-green-600" id="total-profit">
-                --
-              </p>
-              <p class="text-sm text-gray-500">
-                YoY: <span id="profit-yoy">--</span>
-              </p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900">Orders</h3>
-              <p class="text-3xl font-bold text-purple-600" id="total-orders">
-                --
-              </p>
-              <p class="text-sm text-gray-500">
-                YoY: <span id="orders-yoy">--</span>
-              </p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900">Profit Margin</h3>
-              <p class="text-3xl font-bold text-orange-600" id="profit-margin">
-                --
-              </p>
-              <p class="text-sm text-gray-500">
-                YoY: <span id="margin-yoy">--</span>
-              </p>
+          <div class="max-w-5xl mx-auto">
+            <!-- KPI セクション -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+            >
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
+                <p class="text-3xl font-bold text-blue-600" id="total-sales">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="sales-yoy">--</span>
+                </p>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900">Total Profit</h3>
+                <p class="text-3xl font-bold text-green-600" id="total-profit">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="profit-yoy">--</span>
+                </p>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900">Orders</h3>
+                <p class="text-3xl font-bold text-purple-600" id="total-orders">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="orders-yoy">--</span>
+                </p>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900">Profit Margin</h3>
+                <p
+                  class="text-3xl font-bold text-orange-600"
+                  id="profit-margin"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="margin-yoy">--</span>
+                </p>
+              </div>
             </div>
           </div>
 
@@ -369,7 +374,7 @@
 
         <!-- Geography page -->
         <div id="geography" class="page">
-          <div class="space-y-6">
+          <div class="space-y-6 max-w-5xl mx-auto">
             <!-- 地域別KPI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div class="bg-white rounded-lg shadow p-6">
@@ -522,31 +527,37 @@
 
         <!-- Products page -->
         <div id="products" class="page">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
-            <p class="text-gray-600">Detailed analysis by product category</p>
+          <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
+              <p class="text-gray-600">Detailed analysis by product category</p>
+            </div>
           </div>
         </div>
 
         <!-- Customers page -->
         <div id="customers" class="page">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
-            <p class="text-gray-600">Detailed analysis by customer segment</p>
+          <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
+              <p class="text-gray-600">Detailed analysis by customer segment</p>
+            </div>
           </div>
         </div>
 
         <!-- Time page -->
         <div id="time" class="page">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
-            <p class="text-gray-600">Detailed analysis over time</p>
+          <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
+              <p class="text-gray-600">Detailed analysis over time</p>
+            </div>
           </div>
         </div>
 
         <!-- Operations page -->
         <div id="operations" class="page">
-          <div class="space-y-6">
+          <div class="space-y-6 max-w-5xl mx-auto">
             <!-- Operations KPIs -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div class="bg-white rounded-lg shadow p-6">
