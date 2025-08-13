@@ -1,9 +1,43 @@
 // グローバル変数
 let dashboardData = null;
 let currentPage = 'overview';
+const chartInstances = new Set();
+
+function ensureEchartsTheme() {
+    if (!window.__echartsThemeRegistered && window.echarts) {
+        const theme = {
+            color:["#3B82F6","#10B981","#F59E0B","#8B5CF6","#EF4444","#14B8A6","#F472B6","#22C55E"],
+            textStyle:{fontFamily:"Inter, system-ui, -apple-system, Segoe UI, Roboto"},
+            axisPointer:{lineStyle:{color:"#9CA3AF"}},
+            grid:{top:24,right:16,bottom:32,left:40,containLabel:true},
+            tooltip:{backgroundColor:"#111827",borderColor:"#374151",textStyle:{color:"#F9FAFB"}},
+            categoryAxis:{axisLine:{lineStyle:{color:"#D1D5DB"}},axisLabel:{color:"#6B7280",hideOverlap:true}},
+            valueAxis:{splitLine:{lineStyle:{color:"#E5E7EB"}},axisLabel:{color:"#6B7280"}}
+        };
+        echarts.registerTheme('dashboard', theme);
+        window.__echartsThemeRegistered = true;
+    }
+}
+
+function registerChartInstance(instance) {
+    if (instance) chartInstances.add(instance);
+}
+
+function resizeAllCharts() {
+    chartInstances.forEach((c) => {
+        try { c.resize(); } catch {}
+    });
+}
+
+let __resizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(__resizeTimer);
+    __resizeTimer = setTimeout(resizeAllCharts, 100);
+});
 
 // ページ初期化
 document.addEventListener('DOMContentLoaded', function() {
+    ensureEchartsTheme();
     initializeNavigation();
     initializeFiltering();
     initializeFilterBarUX();
@@ -228,21 +262,7 @@ function renderOverviewCharts() {
     if (!dashboardData || !dashboardData.records) return;
     
     console.log('オーバービューチャート描画開始');
-    // ECharts テーマ登録（1回だけ）
-    if (!window.__echartsThemeRegistered) {
-        const theme = {
-            color:["#3B82F6","#10B981","#F59E0B","#8B5CF6","#EF4444","#14B8A6","#F472B6","#22C55E"],
-            textStyle:{fontFamily:"Inter, system-ui, -apple-system, Segoe UI, Roboto"},
-            axisPointer:{lineStyle:{color:"#9CA3AF"}},
-            grid:{top:24,right:16,bottom:32,left:40},
-            tooltip:{backgroundColor:"#111827",borderColor:"#374151",textStyle:{color:"#F9FAFB"}},
-            categoryAxis:{axisLine:{lineStyle:{color:"#D1D5DB"}},axisLabel:{color:"#6B7280"}},
-            valueAxis:{splitLine:{lineStyle:{color:"#E5E7EB"}},axisLabel:{color:"#6B7280"}}
-        };
-        echarts.registerTheme('dashboard', theme);
-        window.__echartsThemeRegistered = true;
-    }
-    const useTheme = 'dashboard';
+    ensureEchartsTheme();
     
     renderMonthlyTrendChart();
     renderGeographyChart();
@@ -256,6 +276,7 @@ function renderMonthlyTrendChart() {
     if (!chartDom) return;
     
     const chart = echarts.init(chartDom, 'dashboard');
+    registerChartInstance(chart);
     
     // 実際のデータから月次データを生成
     const monthlyData = processMonthlyDataFromRecords();
@@ -355,6 +376,7 @@ function renderGeographyChart() {
     if (!chartDom) return;
     
     const chart = echarts.init(chartDom, 'dashboard');
+    registerChartInstance(chart);
     
     // 実際のデータから地域データを生成（仮の地域データ）
     const geographyData = [
@@ -394,6 +416,7 @@ function renderCategoryChart() {
     if (!chartDom) return;
     
     const chart = echarts.init(chartDom, 'dashboard');
+    registerChartInstance(chart);
     
     // 実際のデータからカテゴリデータを生成
     const categoryData = processCategoryDataFromRecords();
@@ -487,7 +510,7 @@ function renderSegmentChart() {
     const chartDom = document.getElementById('segment-chart');
     if (!chartDom) return;
     
-    const chart = echarts.init(chartDom);
+    const chart = echarts.init(chartDom, 'dashboard');
     
     // 実際のデータからセグメントデータを生成
     const segmentData = processSegmentDataFromRecords();
@@ -598,7 +621,7 @@ function renderProductsPage() {
 	`;
 
 	const cat = processCategoryDataFromRecords();
-	const combo = echarts.init(document.getElementById('category-combo-chart'));
+	const combo = echarts.init(document.getElementById('category-combo-chart'), 'dashboard');
 	combo.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
 		legend: { data: ['売上', '件数'] },
@@ -610,7 +633,7 @@ function renderProductsPage() {
 		]
 	});
 
-	const pie = echarts.init(document.getElementById('category-pie-chart'));
+	const pie = echarts.init(document.getElementById('category-pie-chart'), 'dashboard');
 	pie.setOption({
 		tooltip: { trigger: 'item' },
 		series: [{ type: 'pie', radius: '50%', data: cat.categories.map((c, i) => ({ name: c, value: cat.sales[i] })) }]
@@ -661,10 +684,10 @@ function renderCustomersPage() {
 	`;
 
 	const seg = processSegmentDataFromRecords();
-	const pie = echarts.init(document.getElementById('segment-pie-chart'));
+	const pie = echarts.init(document.getElementById('segment-pie-chart'), 'dashboard');
 	pie.setOption({ tooltip: { trigger: 'item' }, series: [{ type: 'pie', radius: '50%', data: seg }] });
 
-	const bar = echarts.init(document.getElementById('segment-bar-chart'));
+	const bar = echarts.init(document.getElementById('segment-bar-chart'), 'dashboard');
 	bar.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
 		legend: { data: ['売上', '件数'] },
@@ -709,7 +732,7 @@ function renderTimePage() {
 	`;
 
 	const monthly = processMonthlyDataFromRecords();
-	const chart = echarts.init(document.getElementById('time-trend-chart'));
+	const chart = echarts.init(document.getElementById('time-trend-chart'), 'dashboard');
 	chart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
 		legend: { data: ['売上', '件数'] },
@@ -1151,7 +1174,8 @@ function renderRegionCharts(regionData) {
     const regions = regionData.regions;
     
     // 地域別売上分布チャート
-    const salesChart = echarts.init(document.getElementById('region-sales-chart'));
+    const salesChart = echarts.init(document.getElementById('region-sales-chart'), 'dashboard');
+    registerChartInstance(salesChart);
     salesChart.setOption({
         tooltip: { trigger: 'item' },
         series: [{
@@ -1165,7 +1189,8 @@ function renderRegionCharts(regionData) {
     });
     
     // 地域別利益分布チャート
-    const profitChart = echarts.init(document.getElementById('region-profit-chart'));
+    const profitChart = echarts.init(document.getElementById('region-profit-chart'), 'dashboard');
+    registerChartInstance(profitChart);
     profitChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         xAxis: { type: 'category', data: regions.map(r => r.name) },
@@ -1178,7 +1203,8 @@ function renderRegionCharts(regionData) {
     });
     
     // 地域別配送パフォーマンスチャート
-    const shippingChart = echarts.init(document.getElementById('region-shipping-chart'));
+    const shippingChart = echarts.init(document.getElementById('region-shipping-chart'), 'dashboard');
+    registerChartInstance(shippingChart);
     shippingChart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
         legend: { data: ['売上', '平均配送日数'] },
@@ -1206,7 +1232,8 @@ function renderRegionCharts(regionData) {
     });
     
     // 地域別顧客セグメント分布チャート
-    const segmentChart = echarts.init(document.getElementById('region-segment-chart'));
+    const segmentChart = echarts.init(document.getElementById('region-segment-chart'), 'dashboard');
+    registerChartInstance(segmentChart);
     segmentChart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         legend: { data: regions.map(r => r.name) },
@@ -1378,7 +1405,8 @@ function renderShippingCharts(shippingData) {
 	const modes = shippingData.shippingModes;
 	
 	// 配送モード別売上・件数チャート
-	const modeChart = echarts.init(document.getElementById('shipping-mode-chart'));
+	const modeChart = echarts.init(document.getElementById('shipping-mode-chart'), 'dashboard');
+	registerChartInstance(modeChart);
 	modeChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
 		legend: { data: ['売上', '件数'] },
@@ -1406,7 +1434,8 @@ function renderShippingCharts(shippingData) {
 	});
 	
 	// 配送モード別配送日数チャート
-	const daysChart = echarts.init(document.getElementById('shipping-days-chart'));
+	const daysChart = echarts.init(document.getElementById('shipping-days-chart'), 'dashboard');
+	registerChartInstance(daysChart);
 	daysChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
 		xAxis: { type: 'category', data: modes.map(m => m.name) },
@@ -1419,7 +1448,8 @@ function renderShippingCharts(shippingData) {
 	});
 	
 	// 配送コスト分析チャート
-	const costChart = echarts.init(document.getElementById('shipping-cost-chart'));
+	const costChart = echarts.init(document.getElementById('shipping-cost-chart'), 'dashboard');
+	registerChartInstance(costChart);
 	costChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
 		legend: { data: ['売上', '配送コスト'] },
@@ -1447,7 +1477,8 @@ function renderShippingCharts(shippingData) {
 	});
 	
 	// 地域別配送パフォーマンスチャート
-	const regionPerformanceChart = echarts.init(document.getElementById('region-shipping-performance-chart'));
+	const regionPerformanceChart = echarts.init(document.getElementById('region-shipping-performance-chart'), 'dashboard');
+	registerChartInstance(regionPerformanceChart);
 	
 	// 地域別データを取得
 	const regionData = processRegionData();
