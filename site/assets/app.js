@@ -192,11 +192,11 @@ function updateKPIs() {
         totalProfit = totalSales * 0.125;
     }
     
-    // KPI表示更新
-    document.getElementById('total-sales').textContent = formatCurrency(totalSales);
-    document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
+    // KPI表示更新（コンパクト表記）
+    document.getElementById('total-sales').textContent = formatCompactCurrency(totalSales);
+    document.getElementById('total-orders').textContent = formatCompactNumber(totalOrders);
     document.getElementById('profit-margin').textContent = profitMargin.toFixed(1) + '%';
-    document.getElementById('total-profit').textContent = formatCurrency(totalProfit);
+    document.getElementById('total-profit').textContent = formatCompactCurrency(totalProfit);
     
     // 前年同期比（仮の値）
     document.getElementById('sales-yoy').textContent = '+5.2%';
