@@ -22,8 +22,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (with LFS)
         uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Verify site
+        run: |
+          ls -la site
+          test -f site/index.html
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
