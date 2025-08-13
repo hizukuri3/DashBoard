@@ -80,16 +80,26 @@ async function loadDashboardData() {
             updateLastUpdated();
             renderDashboard();
         } else {
-            console.log('latest.json読み込み失敗、sample.jsonを試行...');
-            // フォールバック: sample.json
-            const sampleResponse = await fetch('data/sample.json');
-            if (sampleResponse.ok) {
-                console.log('sample.json読み込み成功');
-                dashboardData = await sampleResponse.json();
-                updateLastUpdated('sample.json');
+            console.log('latest.json読み込み失敗、enhanced_sample.jsonを試行...');
+            // フォールバック: enhanced_sample.json
+            const enhancedSampleResponse = await fetch('data/enhanced_sample.json');
+            if (enhancedSampleResponse.ok) {
+                console.log('enhanced_sample.json読み込み成功');
+                dashboardData = await enhancedSampleResponse.json();
+                updateLastUpdated('enhanced_sample.json');
                 renderDashboard();
             } else {
-                throw new Error('データファイルが見つかりません');
+                console.log('enhanced_sample.json読み込み失敗、sample.jsonを試行...');
+                // フォールバック: sample.json
+                const sampleResponse = await fetch('data/sample.json');
+                if (sampleResponse.ok) {
+                    console.log('sample.json読み込み成功');
+                    dashboardData = await sampleResponse.json();
+                    updateLastUpdated('sample.json');
+                    renderDashboard();
+                } else {
+                    throw new Error('データファイルが見つかりません');
+                }
             }
         }
     } catch (error) {
@@ -151,16 +161,21 @@ function updateKPIs() {
     const totalSales = records.reduce((sum, record) => sum + (record.value || 0), 0);
     const totalOrders = records.length;
     
-    // 利益率（仮の値、実際のデータに応じて調整）
-    const profitMargin = 12.5; // 例: 12.5%
+    // 利益計算（拡張されたデータがある場合は実際の値、ない場合は仮の値）
+    let totalProfit, profitMargin;
+    if (records.some(record => record.profit)) {
+        totalProfit = records.reduce((sum, record) => sum + (record.profit || 0), 0);
+        profitMargin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
+    } else {
+        // 仮の値（12.5%の利益率）
+        profitMargin = 12.5;
+        totalProfit = totalSales * 0.125;
+    }
     
     // KPI表示更新
     document.getElementById('total-sales').textContent = formatCurrency(totalSales);
     document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
     document.getElementById('profit-margin').textContent = profitMargin.toFixed(1) + '%';
-    
-    // 総利益（仮の値、実際のデータに応じて調整）
-    const totalProfit = totalSales * 0.125; // 12.5%の利益率
     document.getElementById('total-profit').textContent = formatCurrency(totalProfit);
     
     // 前年同期比（仮の値）
@@ -820,6 +835,10 @@ function renderDataTable() {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.category}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.segment}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(record.value)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.profit ? formatCurrency(record.profit) : '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.quantity ? record.quantity.toLocaleString() : '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.region || '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.shipping_mode || '--'}</td>
         </tr>
     `).join('');
     
