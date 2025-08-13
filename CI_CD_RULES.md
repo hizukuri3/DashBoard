@@ -46,6 +46,7 @@
 9. `hotfix/x.y.z` ブランチを削除（cleanup workflow 対象）
 
 注意:
+
 - Pages 自動デプロイは `release/**` に限定（安定運用のため）。hotfix は main 反映後に必要に応じて `release/x.y.z` を切って同内容を同期し、Pages での確認が必要な場合に対応。
 
 ## ブランチクリーンアップ

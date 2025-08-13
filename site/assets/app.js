@@ -136,45 +136,45 @@ function initializePage(pageName) {
 // ダッシュボードデータ読み込み
 async function loadDashboardData() {
   try {
-    console.log("データ読み込み開始...");
+    console.log("Starting data load...");
 
-    // まずenhanced_latest.jsonを試す
-    console.log("enhanced_latest.jsonを読み込み中...");
+    // Try enhanced_latest.json first
+    console.log("Loading enhanced_latest.json...");
     const enhancedLatestResponse = await fetch("data/enhanced_latest.json");
     if (enhancedLatestResponse.ok) {
-      console.log("enhanced_latest.json読み込み成功");
+      console.log("Loaded enhanced_latest.json");
       dashboardData = await enhancedLatestResponse.json();
       updateLastUpdated("enhanced_latest.json");
       renderDashboard();
     } else {
-      console.log("enhanced_latest.json読み込み失敗、latest.jsonを試行...");
-      // フォールバック: latest.json
+      console.log("enhanced_latest.json not found, trying latest.json...");
+      // Fallback: latest.json
       const response = await fetch("data/latest.json");
       if (response.ok) {
-        console.log("latest.json読み込み成功");
+        console.log("Loaded latest.json");
         dashboardData = await response.json();
         updateLastUpdated("latest.json");
         renderDashboard();
       } else {
-        console.log("latest.json読み込み失敗、enhanced_sample.jsonを試行...");
-        // フォールバック: enhanced_sample.json
+        console.log("latest.json not found, trying enhanced_sample.json...");
+        // Fallback: enhanced_sample.json
         const enhancedSampleResponse = await fetch("data/enhanced_sample.json");
         if (enhancedSampleResponse.ok) {
-          console.log("enhanced_sample.json読み込み成功");
+          console.log("Loaded enhanced_sample.json");
           dashboardData = await enhancedSampleResponse.json();
           updateLastUpdated("enhanced_sample.json");
           renderDashboard();
         } else {
-          console.log("enhanced_sample.json読み込み失敗、sample.jsonを試行...");
-          // フォールバック: sample.json
+          console.log("enhanced_sample.json not found, trying sample.json...");
+          // Fallback: sample.json
           const sampleResponse = await fetch("data/sample.json");
           if (sampleResponse.ok) {
-            console.log("sample.json読み込み成功");
+            console.log("Loaded sample.json");
             dashboardData = await sampleResponse.json();
             updateLastUpdated("sample.json");
             renderDashboard();
           } else {
-            throw new Error("データファイルが見つかりません");
+            throw new Error("No data files found");
           }
         }
       }
@@ -275,7 +275,7 @@ function updateKPIs() {
 
 // 数値/通貨フォーマット
 function formatCurrency(amount, decimals = 2) {
-  return new Intl.NumberFormat("ja-JP", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: decimals,
@@ -435,7 +435,7 @@ function renderGeographyChart() {
     },
     series: [
       {
-        name: "地域別売上",
+        name: "Sales by Region",
         type: "pie",
         radius: "50%",
         data: geographyData,
@@ -562,7 +562,7 @@ function renderSegmentChart() {
     },
     series: [
       {
-        name: "顧客セグメント",
+        name: "Customer Segment",
         type: "pie",
         radius: "50%",
         data: segmentData,
@@ -970,7 +970,7 @@ function initializeFilterBarUX() {
     const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
     if (saved.filterbarCollapsed) {
       content.style.display = "none";
-      toggleBtn.textContent = "展開する";
+      toggleBtn.textContent = "Expand";
       toggleBtn.setAttribute("aria-expanded", "false");
     }
     if (saved.pageSize) {
@@ -983,7 +983,7 @@ function initializeFilterBarUX() {
     toggleBtn.addEventListener("click", () => {
       const collapsed = content.style.display === "none";
       content.style.display = collapsed ? "" : "none";
-      toggleBtn.textContent = collapsed ? "折りたたむ" : "展開する";
+      toggleBtn.textContent = collapsed ? "Collapse" : "Expand";
       toggleBtn.setAttribute("aria-expanded", collapsed ? "true" : "false");
       persistUIState();
     });
@@ -1010,7 +1010,7 @@ function applyFilters() {
   const endDate = document.getElementById("end-date").value;
 
   if (!startDate || !endDate) {
-    alert("開始日と終了日を選択してください");
+    alert("Please select start and end dates");
     return;
   }
 
@@ -1230,7 +1230,7 @@ function updateKPIsWithFilteredData() {
 // 日付フォーマット
 function formatDate(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP", {
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -1347,7 +1347,9 @@ function updateGeographyKPIs(regionData) {
   document.getElementById("top-region-profit-name").textContent =
     summary.topProfitRegion ? summary.topProfitRegion.name : "--";
   document.getElementById("avg-shipping-days").textContent =
-    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + " days" : "--";
+    summary.avgShippingDays
+      ? summary.avgShippingDays.toFixed(1) + " days"
+      : "--";
 }
 
 // 地域分析チャート描画
@@ -1465,7 +1467,7 @@ function renderRegionTable(regionData) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.sales)}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.profit)}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.orders.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)}日</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)} days</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.topCategory}</td>
         </tr>
     `,
@@ -1623,7 +1625,9 @@ function updateShippingKPIs(shippingData) {
   document.getElementById("total-shipping-orders").textContent =
     summary.totalOrders.toLocaleString();
   document.getElementById("avg-shipping-days-ops").textContent =
-    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + " days" : "--";
+    summary.avgShippingDays
+      ? summary.avgShippingDays.toFixed(1) + " days"
+      : "--";
   document.getElementById("total-shipping-cost").textContent = formatCurrency(
     summary.totalShippingCost,
   );
@@ -1771,7 +1775,7 @@ function renderShippingTable(shippingData) {
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.orders.toLocaleString()}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.sales)}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.profit)}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)}日</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)} days</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.totalShippingCost)}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.topCategory}</td>
 		</tr>
