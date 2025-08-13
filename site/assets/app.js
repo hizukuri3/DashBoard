@@ -205,12 +205,22 @@ function updateKPIs() {
     document.getElementById('margin-yoy').textContent = '+0.8%';
 }
 
-// 通貨フォーマット
-function formatCurrency(amount) {
+// 数値/通貨フォーマット
+function formatCurrency(amount, decimals = 2) {
     return new Intl.NumberFormat('ja-JP', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'USD',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
     }).format(amount);
+}
+
+function formatCompactNumber(value) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0);
+}
+
+function formatCompactCurrency(value) {
+    return '$' + new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0);
 }
 
 // オーバービューページのチャート描画
@@ -274,12 +284,14 @@ function renderMonthlyTrendChart() {
             {
                 type: 'value',
                 name: '売上',
-                position: 'left'
+                position: 'left',
+                axisLabel: { formatter: (v) => formatCompactCurrency(v) }
             },
             {
                 type: 'value',
                 name: '注文数',
-                position: 'right'
+                position: 'right',
+                axisLabel: { formatter: (v) => formatCompactNumber(v) }
             }
         ],
         series: [
@@ -410,12 +422,14 @@ function renderCategoryChart() {
             {
                 type: 'value',
                 name: '売上',
-                position: 'left'
+                position: 'left',
+                axisLabel: { formatter: (v) => formatCompactCurrency(v) }
             },
             {
                 type: 'value',
                 name: '注文数',
-                position: 'right'
+                position: 'right',
+                axisLabel: { formatter: (v) => formatCompactNumber(v) }
             }
         ],
         series: [
@@ -881,14 +895,14 @@ function renderDataTable() {
     // テーブル行の生成
     tbody.innerHTML = sortedData.map(record => `
         <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(record.date)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.category}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.segment}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(record.value)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.profit ? formatCurrency(record.profit) : '--'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.quantity ? record.quantity.toLocaleString() : '--'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.region || '--'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.shipping_mode || '--'}</td>
+            <td class="sticky left-0 bg-white px-6 py-4 text-sm text-gray-900">${formatDate(record.date)}</td>
+            <td class="sticky left-40 bg-white px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.category}">${record.category}</span></td>
+            <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.segment}">${record.segment}</span></td>
+            <td class="px-6 py-4 text-sm text-right text-gray-900">${formatCurrency(record.value, 0)}</td>
+            <td class="px-6 py-4 text-sm text-right text-gray-900">${record.profit ? formatCurrency(record.profit, 0) : '--'}</td>
+            <td class="px-6 py-4 text-sm text-right text-gray-900">${record.quantity ? record.quantity.toLocaleString() : '--'}</td>
+            <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.region || ''}">${record.region || '--'}</span></td>
+            <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.shipping_mode || ''}">${record.shipping_mode || '--'}</span></td>
         </tr>
     `).join('');
     
