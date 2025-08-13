@@ -61,10 +61,10 @@ window.addEventListener("resize", () => {
 // ページ初期化
 document.addEventListener("DOMContentLoaded", function () {
   ensureEchartsTheme();
-  initializeNavigation();
+    initializeNavigation();
   initializeFiltering();
   initializeFilterBarUX();
-  loadDashboardData();
+    loadDashboardData();
 });
 
 // ナビゲーション初期化
@@ -74,14 +74,14 @@ function initializeNavigation() {
     navItems.forEach((item) => {
       item.addEventListener("click", function () {
         const targetPage = this.getAttribute("data-page");
-        switchPage(targetPage);
-      });
+            switchPage(targetPage);
+        });
     });
     const select = document.getElementById("page-select-mobile");
     if (select) {
       select.addEventListener("change", (e) => {
         switchPage(e.target.value);
-      });
+    });
     }
   };
   bind();
@@ -89,105 +89,105 @@ function initializeNavigation() {
 
 // ページ切り替え
 function switchPage(pageName) {
-  // 現在のページを非表示
+    // 現在のページを非表示
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.remove("active");
-  });
-
-  // ナビゲーションアイテムのアクティブ状態を更新
+    });
+    
+    // ナビゲーションアイテムのアクティブ状態を更新
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.classList.remove("active");
-  });
-
-  // 新しいページを表示
+    });
+    
+    // 新しいページを表示
   document.getElementById(pageName).classList.add("active");
   document.querySelector(`[data-page="${pageName}"]`).classList.add("active");
-
-  currentPage = pageName;
-
-  // ページ固有の初期化処理
-  initializePage(pageName);
+    
+    currentPage = pageName;
+    
+    // ページ固有の初期化処理
+    initializePage(pageName);
 }
 
 // ページ固有の初期化処理
 function initializePage(pageName) {
   switch (pageName) {
     case "overview":
-      renderOverviewCharts();
-      break;
+            renderOverviewCharts();
+            break;
     case "geography":
-      renderGeographyPage();
-      break;
+            renderGeographyPage();
+            break;
     case "products":
-      renderProductsPage();
-      break;
+            renderProductsPage();
+            break;
     case "customers":
-      renderCustomersPage();
-      break;
+            renderCustomersPage();
+            break;
     case "time":
-      renderTimePage();
-      break;
+            renderTimePage();
+            break;
     case "operations":
-      renderOperationsPage();
-      break;
-  }
+            renderOperationsPage();
+            break;
+    }
 }
 
 // ダッシュボードデータ読み込み
 async function loadDashboardData() {
-  try {
-    console.log("データ読み込み開始...");
+    try {
+    console.log("Starting data load...");
 
-    // まずenhanced_latest.jsonを試す
-    console.log("enhanced_latest.jsonを読み込み中...");
+    // Try enhanced_latest.json first
+    console.log("Loading enhanced_latest.json...");
     const enhancedLatestResponse = await fetch("data/enhanced_latest.json");
     if (enhancedLatestResponse.ok) {
-      console.log("enhanced_latest.json読み込み成功");
+      console.log("Loaded enhanced_latest.json");
       dashboardData = await enhancedLatestResponse.json();
       updateLastUpdated("enhanced_latest.json");
       renderDashboard();
     } else {
-      console.log("enhanced_latest.json読み込み失敗、latest.jsonを試行...");
-      // フォールバック: latest.json
+      console.log("enhanced_latest.json not found, trying latest.json...");
+      // Fallback: latest.json
       const response = await fetch("data/latest.json");
-      if (response.ok) {
-        console.log("latest.json読み込み成功");
-        dashboardData = await response.json();
+        if (response.ok) {
+        console.log("Loaded latest.json");
+            dashboardData = await response.json();
         updateLastUpdated("latest.json");
-        renderDashboard();
-      } else {
-        console.log("latest.json読み込み失敗、enhanced_sample.jsonを試行...");
-        // フォールバック: enhanced_sample.json
+            renderDashboard();
+        } else {
+        console.log("latest.json not found, trying enhanced_sample.json...");
+        // Fallback: enhanced_sample.json
         const enhancedSampleResponse = await fetch("data/enhanced_sample.json");
         if (enhancedSampleResponse.ok) {
-          console.log("enhanced_sample.json読み込み成功");
+          console.log("Loaded enhanced_sample.json");
           dashboardData = await enhancedSampleResponse.json();
           updateLastUpdated("enhanced_sample.json");
           renderDashboard();
         } else {
-          console.log("enhanced_sample.json読み込み失敗、sample.jsonを試行...");
-          // フォールバック: sample.json
+          console.log("enhanced_sample.json not found, trying sample.json...");
+          // Fallback: sample.json
           const sampleResponse = await fetch("data/sample.json");
-          if (sampleResponse.ok) {
-            console.log("sample.json読み込み成功");
-            dashboardData = await sampleResponse.json();
+            if (sampleResponse.ok) {
+            console.log("Loaded sample.json");
+                dashboardData = await sampleResponse.json();
             updateLastUpdated("sample.json");
-            renderDashboard();
-          } else {
-            throw new Error("データファイルが見つかりません");
+                renderDashboard();
+            } else {
+            throw new Error("No data files found");
           }
         }
-      }
-    }
-  } catch (error) {
+            }
+        }
+    } catch (error) {
     console.error("Data load error:", error);
     showError("Failed to load data: " + error.message);
-  }
+    }
 }
 
 // 最終更新時刻更新
 function updateLastUpdated(filename = "latest.json") {
-  const now = new Date();
+    const now = new Date();
   const timeString = now.toLocaleString("en-US");
   document.getElementById("last-updated").textContent =
     `Last updated: ${timeString} (${filename})`;
@@ -196,7 +196,7 @@ function updateLastUpdated(filename = "latest.json") {
 // エラー表示
 function showError(message) {
   const main = document.querySelector("main");
-  main.innerHTML = `
+    main.innerHTML = `
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -217,31 +217,31 @@ function showError(message) {
 
 // ダッシュボード描画
 function renderDashboard() {
-  if (!dashboardData) return;
-
+    if (!dashboardData) return;
+    
   console.log("Render dashboard", dashboardData);
-
-  // KPI更新
-  updateKPIs();
-
-  // 現在のページに応じてチャート描画
-  initializePage(currentPage);
+    
+    // KPI更新
+    updateKPIs();
+    
+    // 現在のページに応じてチャート描画
+    initializePage(currentPage);
 }
 
 // KPI更新
 function updateKPIs() {
-  if (!dashboardData || !dashboardData.records) return;
-
-  const records = dashboardData.records;
+    if (!dashboardData || !dashboardData.records) return;
+    
+    const records = dashboardData.records;
   console.log("KPI更新中、レコード数:", records.length);
-
-  // 集計計算
+    
+    // 集計計算
   const totalSales = records.reduce(
     (sum, record) => sum + (record.value || 0),
     0,
   );
-  const totalOrders = records.length;
-
+    const totalOrders = records.length;
+    
   // 利益計算（拡張されたデータがある場合は実際の値、ない場合は仮の値）
   let totalProfit, profitMargin;
   if (records.some((record) => record.profit)) {
@@ -265,8 +265,8 @@ function updateKPIs() {
     profitMargin.toFixed(1) + "%";
   document.getElementById("total-profit").textContent =
     formatCompactCurrency(totalProfit);
-
-  // 前年同期比（仮の値）
+    
+    // 前年同期比（仮の値）
   document.getElementById("sales-yoy").textContent = "+5.2%";
   document.getElementById("profit-yoy").textContent = "+5.2%";
   document.getElementById("orders-yoy").textContent = "+3.8%";
@@ -275,12 +275,12 @@ function updateKPIs() {
 
 // 数値/通貨フォーマット
 function formatCurrency(amount, decimals = 2) {
-  return new Intl.NumberFormat("ja-JP", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(amount);
+    }).format(amount);
 }
 
 function formatCompactNumber(value) {
@@ -302,48 +302,48 @@ function formatCompactCurrency(value) {
 
 // オーバービューページのチャート描画
 function renderOverviewCharts() {
-  if (!dashboardData || !dashboardData.records) return;
-
+    if (!dashboardData || !dashboardData.records) return;
+    
   console.log("Render overview charts");
   ensureEchartsTheme();
-
-  renderMonthlyTrendChart();
-  renderGeographyChart();
-  renderCategoryChart();
-  renderSegmentChart();
+    
+    renderMonthlyTrendChart();
+    renderGeographyChart();
+    renderCategoryChart();
+    renderSegmentChart();
 }
 
 // 月次トレンドチャート
 function renderMonthlyTrendChart() {
   const chartDom = document.getElementById("monthly-trend-chart");
-  if (!chartDom) return;
-
+    if (!chartDom) return;
+    
   const chart = echarts.init(chartDom, "dashboard");
   registerChartInstance(chart);
-
-  // 実際のデータから月次データを生成
-  const monthlyData = processMonthlyDataFromRecords();
-
-  const option = {
-    tooltip: {
+    
+    // 実際のデータから月次データを生成
+    const monthlyData = processMonthlyDataFromRecords();
+    
+    const option = {
+        tooltip: {
       trigger: "axis",
-      axisPointer: {
+            axisPointer: {
         type: "cross",
-      },
-    },
+        },
+        },
     legend: { data: ["Sales", "Orders"] },
-    grid: {
+        grid: {
       left: "3%",
       right: "4%",
       bottom: "3%",
       containLabel: true,
-    },
-    xAxis: {
+        },
+        xAxis: {
       type: "category",
       data: monthlyData.months,
-    },
-    yAxis: [
-      {
+        },
+        yAxis: [
+            {
         type: "value",
         name: "Sales",
         position: "left",
@@ -355,53 +355,53 @@ function renderMonthlyTrendChart() {
         position: "right",
         axisLabel: { formatter: (v) => formatCompactNumber(v) },
       },
-    ],
-    series: [
-      {
+        ],
+        series: [
+            {
         name: "Sales",
         type: "line",
-        yAxisIndex: 0,
-        data: monthlyData.sales,
+                yAxisIndex: 0,
+                data: monthlyData.sales,
         itemStyle: { color: "#3B82F6" },
-      },
-      {
+            },
+            {
         name: "Orders",
         type: "line",
-        yAxisIndex: 1,
-        data: monthlyData.orders,
+                yAxisIndex: 1,
+                data: monthlyData.orders,
         itemStyle: { color: "#10B981" },
       },
     ],
-  };
-
-  chart.setOption(option);
+    };
+    
+    chart.setOption(option);
 }
 
 // 実際のデータから月次データを処理
 function processMonthlyDataFromRecords() {
-  if (!dashboardData || !dashboardData.records) {
-    return { months: [], sales: [], orders: [] };
-  }
-
-  const records = dashboardData.records;
-  const monthlyData = {};
-
-  records.forEach((record) => {
-    const date = new Date(record.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-    if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = { sales: 0, orders: 0 };
+    if (!dashboardData || !dashboardData.records) {
+        return { months: [], sales: [], orders: [] };
     }
-
-    monthlyData[monthKey].sales += record.value || 0;
-    monthlyData[monthKey].orders += 1;
-  });
-
-  // 月順にソート
-  const sortedMonths = Object.keys(monthlyData).sort();
-
-  return {
+    
+    const records = dashboardData.records;
+    const monthlyData = {};
+    
+  records.forEach((record) => {
+        const date = new Date(record.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { sales: 0, orders: 0 };
+        }
+        
+        monthlyData[monthKey].sales += record.value || 0;
+        monthlyData[monthKey].orders += 1;
+    });
+    
+    // 月順にソート
+    const sortedMonths = Object.keys(monthlyData).sort();
+    
+    return {
     months: sortedMonths.map((month) => {
       const [year, monthNum] = month.split("-");
       const d = new Date(Number(year), Number(monthNum) - 1, 1);
@@ -410,80 +410,80 @@ function processMonthlyDataFromRecords() {
     }),
     sales: sortedMonths.map((month) => monthlyData[month].sales),
     orders: sortedMonths.map((month) => monthlyData[month].orders),
-  };
+    };
 }
 
 // 地域別チャート（実際のデータから生成）
 function renderGeographyChart() {
   const chartDom = document.getElementById("geography-chart");
-  if (!chartDom) return;
-
+    if (!chartDom) return;
+    
   const chart = echarts.init(chartDom, "dashboard");
   registerChartInstance(chart);
-
-  // 実際のデータから地域データを生成（仮の地域データ）
-  const geographyData = [
+    
+    // 実際のデータから地域データを生成（仮の地域データ）
+    const geographyData = [
     { value: 1048, name: "East" },
     { value: 735, name: "West" },
     { value: 580, name: "South" },
     { value: 484, name: "Central" },
-  ];
-
-  const option = {
-    tooltip: {
+    ];
+    
+    const option = {
+        tooltip: {
       trigger: "item",
-    },
-    series: [
-      {
-        name: "地域別売上",
+        },
+        series: [
+            {
+        name: "Sales by Region",
         type: "pie",
         radius: "50%",
-        data: geographyData,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
+                data: geographyData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
             shadowColor: "rgba(0, 0, 0, 0.5)",
           },
         },
       },
     ],
-  };
-
-  chart.setOption(option);
+    };
+    
+    chart.setOption(option);
 }
 
 // カテゴリ別チャート（実際のデータから生成）
 function renderCategoryChart() {
   const chartDom = document.getElementById("category-chart");
-  if (!chartDom) return;
-
+    if (!chartDom) return;
+    
   const chart = echarts.init(chartDom, "dashboard");
   registerChartInstance(chart);
-
-  // 実際のデータからカテゴリデータを生成
-  const categoryData = processCategoryDataFromRecords();
-
-  const option = {
-    tooltip: {
+    
+    // 実際のデータからカテゴリデータを生成
+    const categoryData = processCategoryDataFromRecords();
+    
+    const option = {
+        tooltip: {
       trigger: "axis",
-      axisPointer: {
+            axisPointer: {
         type: "shadow",
-      },
-    },
+        },
+        },
     legend: { data: ["Sales", "Orders"] },
-    grid: {
+        grid: {
       left: "3%",
       right: "4%",
       bottom: "3%",
       containLabel: true,
-    },
-    xAxis: {
+        },
+        xAxis: {
       type: "category",
       data: categoryData.categories,
-    },
-    yAxis: [
-      {
+        },
+        yAxis: [
+            {
         type: "value",
         name: "Sales",
         position: "left",
@@ -495,119 +495,119 @@ function renderCategoryChart() {
         position: "right",
         axisLabel: { formatter: (v) => formatCompactNumber(v) },
       },
-    ],
-    series: [
-      {
+        ],
+        series: [
+            {
         name: "Sales",
         type: "bar",
-        yAxisIndex: 0,
-        data: categoryData.sales,
+                yAxisIndex: 0,
+                data: categoryData.sales,
         itemStyle: { color: "#3B82F6" },
-      },
-      {
+            },
+            {
         name: "Orders",
         type: "bar",
-        yAxisIndex: 1,
-        data: categoryData.orders,
+                yAxisIndex: 1,
+                data: categoryData.orders,
         itemStyle: { color: "#10B981" },
       },
     ],
-  };
-
-  chart.setOption(option);
+    };
+    
+    chart.setOption(option);
 }
 
 // 実際のデータからカテゴリデータを処理
 function processCategoryDataFromRecords() {
-  if (!dashboardData || !dashboardData.records) {
-    return { categories: [], sales: [], orders: [] };
-  }
-
-  const records = dashboardData.records;
-  const categoryData = {};
-
+    if (!dashboardData || !dashboardData.records) {
+        return { categories: [], sales: [], orders: [] };
+    }
+    
+    const records = dashboardData.records;
+    const categoryData = {};
+    
   records.forEach((record) => {
     const category = record.category || "Unknown";
-
-    if (!categoryData[category]) {
-      categoryData[category] = { sales: 0, orders: 0 };
-    }
-
-    categoryData[category].sales += record.value || 0;
-    categoryData[category].orders += 1;
-  });
-
-  const categories = Object.keys(categoryData);
-
-  return {
-    categories: categories,
+        
+        if (!categoryData[category]) {
+            categoryData[category] = { sales: 0, orders: 0 };
+        }
+        
+        categoryData[category].sales += record.value || 0;
+        categoryData[category].orders += 1;
+    });
+    
+    const categories = Object.keys(categoryData);
+    
+    return {
+        categories: categories,
     sales: categories.map((cat) => categoryData[cat].sales),
     orders: categories.map((cat) => categoryData[cat].orders),
-  };
+    };
 }
 
 // セグメント別チャート（実際のデータから生成）
 function renderSegmentChart() {
   const chartDom = document.getElementById("segment-chart");
-  if (!chartDom) return;
-
+    if (!chartDom) return;
+    
   const chart = echarts.init(chartDom, "dashboard");
-
-  // 実際のデータからセグメントデータを生成
-  const segmentData = processSegmentDataFromRecords();
-
-  const option = {
-    tooltip: {
+    
+    // 実際のデータからセグメントデータを生成
+    const segmentData = processSegmentDataFromRecords();
+    
+    const option = {
+        tooltip: {
       trigger: "item",
-    },
-    series: [
-      {
-        name: "顧客セグメント",
+        },
+        series: [
+            {
+        name: "Customer Segment",
         type: "pie",
         radius: "50%",
-        data: segmentData,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
+                data: segmentData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
             shadowColor: "rgba(0, 0, 0, 0.5)",
           },
         },
       },
     ],
-  };
-
-  chart.setOption(option);
+    };
+    
+    chart.setOption(option);
 }
 
 // 実際のデータからセグメントデータを処理
 function processSegmentDataFromRecords() {
-  if (!dashboardData || !dashboardData.records) {
-    return [];
-  }
-
-  const records = dashboardData.records;
-  const segmentData = {};
-
+    if (!dashboardData || !dashboardData.records) {
+        return [];
+    }
+    
+    const records = dashboardData.records;
+    const segmentData = {};
+    
   records.forEach((record) => {
     const segment = record.segment || "Unknown";
-
-    if (!segmentData[segment]) {
-      segmentData[segment] = 0;
-    }
-
-    segmentData[segment] += record.value || 0;
-  });
-
+        
+        if (!segmentData[segment]) {
+            segmentData[segment] = 0;
+        }
+        
+        segmentData[segment] += record.value || 0;
+    });
+    
   return Object.keys(segmentData).map((segment) => ({
-    name: segment,
+        name: segment,
     value: segmentData[segment],
-  }));
+    }));
 }
 
 // 各ページの描画関数
 function renderGeographyPage() {
-  if (!dashboardData || !dashboardData.records) return;
+	if (!dashboardData || !dashboardData.records) return;
 
   console.log("Render geography page");
 
@@ -628,10 +628,10 @@ function renderGeographyPage() {
 }
 
 function renderProductsPage() {
-  if (!dashboardData || !dashboardData.records) return;
+	if (!dashboardData || !dashboardData.records) return;
 
   const page = document.getElementById("products");
-  page.innerHTML = `
+	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
@@ -661,12 +661,12 @@ function renderProductsPage() {
 		</div>
 	`;
 
-  const cat = processCategoryDataFromRecords();
+	const cat = processCategoryDataFromRecords();
   const combo = echarts.init(
     document.getElementById("category-combo-chart"),
     "dashboard",
   );
-  combo.setOption({
+	combo.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
     xAxis: { type: "category", data: cat.categories },
@@ -674,7 +674,7 @@ function renderProductsPage() {
       { type: "value", name: "Sales" },
       { type: "value", name: "Orders" },
     ],
-    series: [
+		series: [
       {
         name: "Sales",
         type: "bar",
@@ -696,7 +696,7 @@ function renderProductsPage() {
     document.getElementById("category-pie-chart"),
     "dashboard",
   );
-  pie.setOption({
+	pie.setOption({
     tooltip: { trigger: "item" },
     series: [
       {
@@ -722,10 +722,10 @@ function renderProductsPage() {
 }
 
 function renderCustomersPage() {
-  if (!dashboardData || !dashboardData.records) return;
+	if (!dashboardData || !dashboardData.records) return;
 
   const page = document.getElementById("customers");
-  page.innerHTML = `
+	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
@@ -755,7 +755,7 @@ function renderCustomersPage() {
 		</div>
 	`;
 
-  const seg = processSegmentDataFromRecords();
+	const seg = processSegmentDataFromRecords();
   const pie = echarts.init(
     document.getElementById("segment-pie-chart"),
     "dashboard",
@@ -769,7 +769,7 @@ function renderCustomersPage() {
     document.getElementById("segment-bar-chart"),
     "dashboard",
   );
-  bar.setOption({
+	bar.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Sales", "Orders"] },
     xAxis: { type: "category", data: seg.map((s) => s.name) },
@@ -777,7 +777,7 @@ function renderCustomersPage() {
       { type: "value", name: "Sales" },
       { type: "value", name: "Orders" },
     ],
-    series: [
+		series: [
       {
         name: "Sales",
         type: "bar",
@@ -810,10 +810,10 @@ function renderCustomersPage() {
 }
 
 function renderTimePage() {
-  if (!dashboardData || !dashboardData.records) return;
+	if (!dashboardData || !dashboardData.records) return;
 
   const page = document.getElementById("time");
-  page.innerHTML = `
+	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
@@ -831,12 +831,12 @@ function renderTimePage() {
 		</div>
 	`;
 
-  const monthly = processMonthlyDataFromRecords();
+	const monthly = processMonthlyDataFromRecords();
   const chart = echarts.init(
     document.getElementById("time-trend-chart"),
     "dashboard",
   );
-  chart.setOption({
+	chart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
     xAxis: { type: "category", data: monthly.months },
@@ -844,7 +844,7 @@ function renderTimePage() {
       { type: "value", name: "Sales" },
       { type: "value", name: "Orders" },
     ],
-    series: [
+		series: [
       {
         name: "Sales",
         type: "line",
@@ -865,8 +865,8 @@ function renderTimePage() {
   const tbody = document.getElementById("time-table-body");
   tbody.innerHTML = monthly.months
     .map((m, i) => {
-      const sales = monthly.sales[i];
-      const orders = monthly.orders[i];
+		const sales = monthly.sales[i];
+		const orders = monthly.orders[i];
       let growth = "N/A";
       if (i > 0 && monthly.sales[i - 1] !== 0) {
         growth =
@@ -874,14 +874,14 @@ function renderTimePage() {
             ((sales - monthly.sales[i - 1]) / monthly.sales[i - 1]) *
             100
           ).toFixed(1) + "%";
-      }
-      return `<tr><td class="px-6 py-3 text-sm">${m}</td><td class="px-6 py-3 text-sm">${formatCurrency(sales)}</td><td class="px-6 py-3 text-sm">${orders.toLocaleString()}</td><td class="px-6 py-3 text-sm">${growth}</td></tr>`;
+		}
+		return `<tr><td class="px-6 py-3 text-sm">${m}</td><td class="px-6 py-3 text-sm">${formatCurrency(sales)}</td><td class="px-6 py-3 text-sm">${orders.toLocaleString()}</td><td class="px-6 py-3 text-sm">${growth}</td></tr>`;
     })
     .join("");
 }
 
 function renderOperationsPage() {
-  if (!dashboardData || !dashboardData.records) return;
+	if (!dashboardData || !dashboardData.records) return;
 
   console.log("Render operations page");
 
@@ -970,7 +970,7 @@ function initializeFilterBarUX() {
     const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
     if (saved.filterbarCollapsed) {
       content.style.display = "none";
-      toggleBtn.textContent = "展開する";
+      toggleBtn.textContent = "Expand";
       toggleBtn.setAttribute("aria-expanded", "false");
     }
     if (saved.pageSize) {
@@ -983,7 +983,7 @@ function initializeFilterBarUX() {
     toggleBtn.addEventListener("click", () => {
       const collapsed = content.style.display === "none";
       content.style.display = collapsed ? "" : "none";
-      toggleBtn.textContent = collapsed ? "折りたたむ" : "展開する";
+      toggleBtn.textContent = collapsed ? "Collapse" : "Expand";
       toggleBtn.setAttribute("aria-expanded", collapsed ? "true" : "false");
       persistUIState();
     });
@@ -1010,7 +1010,7 @@ function applyFilters() {
   const endDate = document.getElementById("end-date").value;
 
   if (!startDate || !endDate) {
-    alert("開始日と終了日を選択してください");
+    alert("Please select start and end dates");
     return;
   }
 
@@ -1230,7 +1230,7 @@ function updateKPIsWithFilteredData() {
 // 日付フォーマット
 function formatDate(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP", {
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -1465,7 +1465,7 @@ function renderRegionTable(regionData) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.sales)}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.profit)}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.orders.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)}日</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)} days</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.topCategory}</td>
         </tr>
     `,
@@ -1771,7 +1771,7 @@ function renderShippingTable(shippingData) {
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.orders.toLocaleString()}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.sales)}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.profit)}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)}日</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)} days</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.totalShippingCost)}</td>
 			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.topCategory}</td>
 		</tr>
