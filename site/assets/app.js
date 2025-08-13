@@ -1347,7 +1347,7 @@ function updateGeographyKPIs(regionData) {
   document.getElementById("top-region-profit-name").textContent =
     summary.topProfitRegion ? summary.topProfitRegion.name : "--";
   document.getElementById("avg-shipping-days").textContent =
-    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + "日" : "--";
+    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + " days" : "--";
 }
 
 // 地域分析チャート描画
@@ -1623,7 +1623,7 @@ function updateShippingKPIs(shippingData) {
   document.getElementById("total-shipping-orders").textContent =
     summary.totalOrders.toLocaleString();
   document.getElementById("avg-shipping-days-ops").textContent =
-    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + "日" : "--";
+    summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + " days" : "--";
   document.getElementById("total-shipping-cost").textContent = formatCurrency(
     summary.totalShippingCost,
   );
