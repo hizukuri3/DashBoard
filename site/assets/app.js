@@ -5,6 +5,7 @@ let currentPage = 'overview';
 // ページ初期化
 document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
+    initializeFiltering();
     loadDashboardData();
 });
 
@@ -726,4 +727,249 @@ function renderOperationsPage() {
 
 	const pie = echarts.init(document.getElementById('ops-pie'));
 	pie.setOption({ tooltip: { trigger: 'item' }, series: [{ type: 'pie', radius: '50%', data: cat.categories.map((c, i) => ({ name: c, value: cat.sales[i] })) }] });
+}
+
+// ===== フィルタリング機能 =====
+
+// フィルタリング状態管理
+let filteredData = null;
+let currentPageNum = 1;
+let pageSize = 50;
+let sortField = 'date';
+let sortDirection = 'asc';
+
+// フィルタリング機能の初期化
+function initializeFiltering() {
+    // 日付フィールドの初期値を設定
+    const today = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    
+    document.getElementById('start-date').value = threeMonthsAgo.toISOString().split('T')[0];
+    document.getElementById('end-date').value = today.toISOString().split('T')[0];
+    
+    // イベントリスナーの設定
+    document.getElementById('apply-filter').addEventListener('click', applyFilters);
+    document.getElementById('reset-filter').addEventListener('click', resetFilters);
+    document.getElementById('page-size').addEventListener('change', onPageSizeChange);
+    
+    // ページネーション
+    document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
+    document.getElementById('next-page').addEventListener('click', () => changePage(1));
+    
+    // ソート機能
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        th.addEventListener('click', () => sortTable(th.getAttribute('data-sort')));
+    });
+    
+    // 初期データ表示
+    applyFilters();
+}
+
+// フィルター適用
+function applyFilters() {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    
+    if (!startDate || !endDate) {
+        alert('開始日と終了日を選択してください');
+        return;
+    }
+    
+    // データフィルタリング
+    filteredData = filterDataByDateRange(startDate, endDate);
+    
+    // テーブル更新
+    renderDataTable();
+    
+    // KPI更新
+    updateKPIsWithFilteredData();
+    
+    console.log('フィルター適用完了:', filteredData.length, '件');
+}
+
+// 日付範囲でデータをフィルタリング
+function filterDataByDateRange(startDate, endDate) {
+    if (!dashboardData || !dashboardData.records) return [];
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    return dashboardData.records.filter(record => {
+        const recordDate = new Date(record.date);
+        return recordDate >= start && recordDate <= end;
+    });
+}
+
+// データテーブルの描画
+function renderDataTable() {
+    if (!filteredData) return;
+    
+    const tbody = document.getElementById('data-table-body');
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    const pageData = filteredData.slice(startIndex, endIndex);
+    
+    // ソート適用
+    const sortedData = sortData(pageData, sortField, sortDirection);
+    
+    // テーブル行の生成
+    tbody.innerHTML = sortedData.map(record => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(record.date)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.category}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.segment}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(record.value)}</td>
+        </tr>
+    `).join('');
+    
+    // 統計情報更新
+    updateTableStats();
+    
+    // ページネーション更新
+    updatePagination();
+}
+
+// データソート
+function sortData(data, field, direction) {
+    return [...data].sort((a, b) => {
+        let aVal = a[field];
+        let bVal = b[field];
+        
+        if (field === 'date') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+        } else if (field === 'value') {
+            aVal = parseFloat(aVal);
+            bVal = parseFloat(bVal);
+        }
+        
+        if (direction === 'asc') {
+            return aVal > bVal ? 1 : -1;
+        } else {
+            return aVal < bVal ? 1 : -1;
+        }
+    });
+}
+
+// テーブルソート
+function sortTable(field) {
+    if (sortField === field) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortField = field;
+        sortDirection = 'asc';
+    }
+    
+    // ソートインジケーター更新
+    updateSortIndicators();
+    
+    // テーブル再描画
+    renderDataTable();
+}
+
+// ソートインジケーター更新
+function updateSortIndicators() {
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        const indicator = th.querySelector('.sort-indicator');
+        if (th.getAttribute('data-sort') === sortField) {
+            indicator.textContent = sortDirection === 'asc' ? '▲' : '▼';
+        } else {
+            indicator.textContent = '▼';
+        }
+    });
+}
+
+// ページサイズ変更
+function onPageSizeChange() {
+    pageSize = document.getElementById('page-size').value;
+    currentPageNum = 1;
+    renderDataTable();
+}
+
+// ページ変更
+function changePage(delta) {
+    const newPage = currentPageNum + delta;
+    const totalPages = Math.ceil(filteredData.length / (pageSize === 'all' ? filteredData.length : pageSize));
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPageNum = newPage;
+        renderDataTable();
+    }
+}
+
+// テーブル統計情報更新
+function updateTableStats() {
+    if (!filteredData) return;
+    
+    document.getElementById('total-records').textContent = filteredData.length.toLocaleString();
+    
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    const displayedCount = endIndex - startIndex;
+    
+    document.getElementById('displayed-records').textContent = displayedCount.toLocaleString();
+}
+
+// ページネーション更新
+function updatePagination() {
+    if (!filteredData) return;
+    
+    const totalPages = Math.ceil(filteredData.length / (pageSize === 'all' ? filteredData.length : pageSize));
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    
+    document.getElementById('current-page').textContent = currentPageNum;
+    document.getElementById('total-pages').textContent = totalPages;
+    document.getElementById('page-info').textContent = `${startIndex + 1}-${endIndex}件を表示`;
+    
+    // ボタンの有効/無効状態
+    document.getElementById('prev-page').disabled = currentPageNum <= 1;
+    document.getElementById('next-page').disabled = currentPageNum >= totalPages;
+}
+
+// フィルターリセット
+function resetFilters() {
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    document.getElementById('page-size').value = '50';
+    
+    pageSize = 50;
+    currentPageNum = 1;
+    sortField = 'date';
+    sortDirection = 'asc';
+    
+    filteredData = dashboardData ? dashboardData.records : [];
+    renderDataTable();
+    updateKPIsWithFilteredData();
+    updateSortIndicators();
+}
+
+// フィルタリングされたデータでKPI更新
+function updateKPIsWithFilteredData() {
+    if (!filteredData) return;
+    
+    const totalSales = filteredData.reduce((sum, record) => sum + (record.value || 0), 0);
+    const totalOrders = filteredData.length;
+    
+    // KPI表示更新（フィルタリングされたデータ）
+    document.getElementById('total-sales').textContent = formatCurrency(totalSales);
+    document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
+    
+    // 利益率（仮の値）
+    const profitMargin = 12.5;
+    const totalProfit = totalSales * 0.125;
+    
+    document.getElementById('total-profit').textContent = formatCurrency(totalProfit);
+    document.getElementById('profit-margin').textContent = profitMargin.toFixed(1) + '%';
+}
+
+// 日付フォーマット
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 }
