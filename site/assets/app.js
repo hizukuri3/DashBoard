@@ -5,6 +5,7 @@ let currentPage = 'overview';
 // ページ初期化
 document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
+    initializeFiltering();
     loadDashboardData();
 });
 
@@ -70,16 +71,34 @@ async function loadDashboardData() {
     try {
         console.log('データ読み込み開始...');
         
-        // まずlatest.jsonを試す
-        console.log('latest.jsonを読み込み中...');
+        // まずenhanced_latest.jsonを試す
+        console.log('enhanced_latest.jsonを読み込み中...');
+        const enhancedLatestResponse = await fetch('data/enhanced_latest.json');
+        if (enhancedLatestResponse.ok) {
+            console.log('enhanced_latest.json読み込み成功');
+            dashboardData = await enhancedLatestResponse.json();
+            updateLastUpdated('enhanced_latest.json');
+            renderDashboard();
+        } else {
+            console.log('enhanced_latest.json読み込み失敗、latest.jsonを試行...');
+            // フォールバック: latest.json
         const response = await fetch('data/latest.json');
         if (response.ok) {
             console.log('latest.json読み込み成功');
             dashboardData = await response.json();
-            updateLastUpdated();
+                updateLastUpdated('latest.json');
             renderDashboard();
         } else {
-            console.log('latest.json読み込み失敗、sample.jsonを試行...');
+                console.log('latest.json読み込み失敗、enhanced_sample.jsonを試行...');
+                // フォールバック: enhanced_sample.json
+                const enhancedSampleResponse = await fetch('data/enhanced_sample.json');
+                if (enhancedSampleResponse.ok) {
+                    console.log('enhanced_sample.json読み込み成功');
+                    dashboardData = await enhancedSampleResponse.json();
+                    updateLastUpdated('enhanced_sample.json');
+                    renderDashboard();
+                } else {
+                    console.log('enhanced_sample.json読み込み失敗、sample.jsonを試行...');
             // フォールバック: sample.json
             const sampleResponse = await fetch('data/sample.json');
             if (sampleResponse.ok) {
@@ -89,6 +108,8 @@ async function loadDashboardData() {
                 renderDashboard();
             } else {
                 throw new Error('データファイルが見つかりません');
+                    }
+                }
             }
         }
     } catch (error) {
@@ -150,16 +171,21 @@ function updateKPIs() {
     const totalSales = records.reduce((sum, record) => sum + (record.value || 0), 0);
     const totalOrders = records.length;
     
-    // 利益率（仮の値、実際のデータに応じて調整）
-    const profitMargin = 12.5; // 例: 12.5%
+    // 利益計算（拡張されたデータがある場合は実際の値、ない場合は仮の値）
+    let totalProfit, profitMargin;
+    if (records.some(record => record.profit)) {
+        totalProfit = records.reduce((sum, record) => sum + (record.profit || 0), 0);
+        profitMargin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
+    } else {
+        // 仮の値（12.5%の利益率）
+        profitMargin = 12.5;
+        totalProfit = totalSales * 0.125;
+    }
     
     // KPI表示更新
     document.getElementById('total-sales').textContent = formatCurrency(totalSales);
     document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
     document.getElementById('profit-margin').textContent = profitMargin.toFixed(1) + '%';
-    
-    // 総利益（仮の値、実際のデータに応じて調整）
-    const totalProfit = totalSales * 0.125; // 12.5%の利益率
     document.getElementById('total-profit').textContent = formatCurrency(totalProfit);
     
     // 前年同期比（仮の値）
@@ -480,46 +506,22 @@ function processSegmentDataFromRecords() {
 function renderGeographyPage() {
 	if (!dashboardData || !dashboardData.records) return;
 
-	const page = document.getElementById('geography');
-	page.innerHTML = `
-		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">地域分析</h2>
-				<p class="text-sm text-gray-600 mb-4">現在のデータには地域情報が含まれていないため、代替としてセグメント分布を表示しています。</p>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">セグメント分布（売上）</h3>
-						<div id="region-like-pie" class="h-80"></div>
-					</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">セグメント別 売上・件数</h3>
-						<div id="region-like-bar" class="h-80"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-	`;
+	console.log('地域分析ページ描画開始');
 
-	const seg = processSegmentDataFromRecords();
-	const pie = echarts.init(document.getElementById('region-like-pie'));
-	pie.setOption({
-		tooltip: { trigger: 'item' },
-		series: [{ type: 'pie', radius: '50%', data: seg }]
-	});
-
-	const names = seg.map(s => s.name);
-	const values = seg.map(s => s.value);
-	const bar = echarts.init(document.getElementById('region-like-bar'));
-	bar.setOption({
-		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-		legend: { data: ['売上', '件数(概算)'] },
-		xAxis: { type: 'category', data: names },
-		yAxis: [{ type: 'value', name: '売上' }, { type: 'value', name: '件数' }],
-		series: [
-			{ name: '売上', type: 'bar', data: values, yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
-			{ name: '件数(概算)', type: 'line', data: values.map(v => Math.max(1, Math.round(v / 100))), yAxisIndex: 1, itemStyle: { color: '#10B981' } }
-		]
-	});
+	// 地域別データの処理
+	const regionData = processRegionData();
+	
+	// KPI更新
+	updateGeographyKPIs(regionData);
+	
+	// チャート描画
+	renderRegionCharts(regionData);
+	
+	// テーブル描画
+	renderRegionTable(regionData);
+	
+	// 地域フィルター初期化
+	initializeRegionFilter(regionData);
 }
 
 function renderProductsPage() {
@@ -695,35 +697,752 @@ function renderTimePage() {
 function renderOperationsPage() {
 	if (!dashboardData || !dashboardData.records) return;
 
-	const page = document.getElementById('operations');
-	page.innerHTML = `
-		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">配送・運営</h2>
-				<p class="text-sm text-gray-600 mb-4">現在のデータには配送モード情報が含まれていないため、代替としてカテゴリ別の運営ビューを表示しています。</p>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ別 売上</h3>
-						<div id="ops-bar" class="h-80"></div>
-					</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ構成</h3>
-						<div id="ops-pie" class="h-80"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-	`;
+	console.log('配送・運営ページ描画開始');
 
-	const cat = processCategoryDataFromRecords();
-	const bar = echarts.init(document.getElementById('ops-bar'));
-	bar.setOption({
+	// 配送データの処理
+	const shippingData = processShippingData();
+	
+	// KPI更新
+	updateShippingKPIs(shippingData);
+	
+	// チャート描画
+	renderShippingCharts(shippingData);
+	
+	// テーブル描画
+	renderShippingTable(shippingData);
+	
+	// 配送モードフィルター初期化
+	initializeShippingModeFilter(shippingData);
+}
+
+// ===== フィルタリング機能 =====
+
+// フィルタリング状態管理
+let filteredData = null;
+let currentPageNum = 1;
+let pageSize = 50;
+let sortField = 'date';
+let sortDirection = 'asc';
+
+// フィルタリング機能の初期化
+function initializeFiltering() {
+    // 日付フィールドの初期値を設定
+    const today = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    
+    document.getElementById('start-date').value = threeMonthsAgo.toISOString().split('T')[0];
+    document.getElementById('end-date').value = today.toISOString().split('T')[0];
+    
+    // イベントリスナーの設定
+    document.getElementById('apply-filter').addEventListener('click', applyFilters);
+    document.getElementById('reset-filter').addEventListener('click', resetFilters);
+    document.getElementById('page-size').addEventListener('change', onPageSizeChange);
+    
+    // ページネーション
+    document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
+    document.getElementById('next-page').addEventListener('click', () => changePage(1));
+    
+    // ソート機能
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        th.addEventListener('click', () => sortTable(th.getAttribute('data-sort')));
+    });
+    
+    // 初期データ表示
+    applyFilters();
+}
+
+// フィルター適用
+function applyFilters() {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    
+    if (!startDate || !endDate) {
+        alert('開始日と終了日を選択してください');
+        return;
+    }
+    
+    // データフィルタリング
+    filteredData = filterDataByDateRange(startDate, endDate);
+    
+    // テーブル更新
+    renderDataTable();
+    
+    // KPI更新
+    updateKPIsWithFilteredData();
+    
+    console.log('フィルター適用完了:', filteredData.length, '件');
+}
+
+// 日付範囲でデータをフィルタリング
+function filterDataByDateRange(startDate, endDate) {
+    if (!dashboardData || !dashboardData.records) return [];
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    return dashboardData.records.filter(record => {
+        const recordDate = new Date(record.date);
+        return recordDate >= start && recordDate <= end;
+    });
+}
+
+// データテーブルの描画
+function renderDataTable() {
+    if (!filteredData) return;
+    
+    const tbody = document.getElementById('data-table-body');
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    const pageData = filteredData.slice(startIndex, endIndex);
+    
+    // ソート適用
+    const sortedData = sortData(pageData, sortField, sortDirection);
+    
+    // テーブル行の生成
+    tbody.innerHTML = sortedData.map(record => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(record.date)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.category}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.segment}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(record.value)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.profit ? formatCurrency(record.profit) : '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.quantity ? record.quantity.toLocaleString() : '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.region || '--'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.shipping_mode || '--'}</td>
+        </tr>
+    `).join('');
+    
+    // 統計情報更新
+    updateTableStats();
+    
+    // ページネーション更新
+    updatePagination();
+}
+
+// データソート
+function sortData(data, field, direction) {
+    return [...data].sort((a, b) => {
+        let aVal = a[field];
+        let bVal = b[field];
+        
+        if (field === 'date') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+        } else if (field === 'value') {
+            aVal = parseFloat(aVal);
+            bVal = parseFloat(bVal);
+        }
+        
+        if (direction === 'asc') {
+            return aVal > bVal ? 1 : -1;
+        } else {
+            return aVal < bVal ? 1 : -1;
+        }
+    });
+}
+
+// テーブルソート
+function sortTable(field) {
+    if (sortField === field) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortField = field;
+        sortDirection = 'asc';
+    }
+    
+    // ソートインジケーター更新
+    updateSortIndicators();
+    
+    // テーブル再描画
+    renderDataTable();
+}
+
+// ソートインジケーター更新
+function updateSortIndicators() {
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        const indicator = th.querySelector('.sort-indicator');
+        if (th.getAttribute('data-sort') === sortField) {
+            indicator.textContent = sortDirection === 'asc' ? '▲' : '▼';
+        } else {
+            indicator.textContent = '▼';
+        }
+    });
+}
+
+// ページサイズ変更
+function onPageSizeChange() {
+    pageSize = document.getElementById('page-size').value;
+    currentPageNum = 1;
+    renderDataTable();
+}
+
+// ページ変更
+function changePage(delta) {
+    const newPage = currentPageNum + delta;
+    const totalPages = Math.ceil(filteredData.length / (pageSize === 'all' ? filteredData.length : pageSize));
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPageNum = newPage;
+        renderDataTable();
+    }
+}
+
+// テーブル統計情報更新
+function updateTableStats() {
+    if (!filteredData) return;
+    
+    document.getElementById('total-records').textContent = filteredData.length.toLocaleString();
+    
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    const displayedCount = endIndex - startIndex;
+    
+    document.getElementById('displayed-records').textContent = displayedCount.toLocaleString();
+}
+
+// ページネーション更新
+function updatePagination() {
+    if (!filteredData) return;
+    
+    const totalPages = Math.ceil(filteredData.length / (pageSize === 'all' ? filteredData.length : pageSize));
+    const startIndex = (currentPageNum - 1) * pageSize;
+    const endIndex = pageSize === 'all' ? filteredData.length : startIndex + pageSize;
+    
+    document.getElementById('current-page').textContent = currentPageNum;
+    document.getElementById('total-pages').textContent = totalPages;
+    document.getElementById('page-info').textContent = `${startIndex + 1}-${endIndex}件を表示`;
+    
+    // ボタンの有効/無効状態
+    document.getElementById('prev-page').disabled = currentPageNum <= 1;
+    document.getElementById('next-page').disabled = currentPageNum >= totalPages;
+}
+
+// フィルターリセット
+function resetFilters() {
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    document.getElementById('page-size').value = '50';
+    
+    pageSize = 50;
+    currentPageNum = 1;
+    sortField = 'date';
+    sortDirection = 'asc';
+    
+    filteredData = dashboardData ? dashboardData.records : [];
+    renderDataTable();
+    updateKPIsWithFilteredData();
+    updateSortIndicators();
+}
+
+// フィルタリングされたデータでKPI更新
+function updateKPIsWithFilteredData() {
+    if (!filteredData) return;
+    
+    const totalSales = filteredData.reduce((sum, record) => sum + (record.value || 0), 0);
+    const totalOrders = filteredData.length;
+    
+    // KPI表示更新（フィルタリングされたデータ）
+    document.getElementById('total-sales').textContent = formatCurrency(totalSales);
+    document.getElementById('total-orders').textContent = totalOrders.toLocaleString();
+    
+    // 利益率（仮の値）
+    const profitMargin = 12.5;
+    const totalProfit = totalSales * 0.125;
+    
+    document.getElementById('total-profit').textContent = formatCurrency(totalProfit);
+    document.getElementById('profit-margin').textContent = profitMargin.toFixed(1) + '%';
+}
+
+// 日付フォーマット
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+}
+
+// ===== 地域分析機能 =====
+
+// 地域別データの処理
+function processRegionData() {
+    if (!dashboardData || !dashboardData.records) return { regions: [], summary: {} };
+    
+    const records = dashboardData.records;
+    const regionMap = new Map();
+    
+    records.forEach(record => {
+        const region = record.region || 'Unknown';
+        const state = record.state || 'Unknown';
+        
+        if (!regionMap.has(region)) {
+            regionMap.set(region, {
+                name: region,
+                states: new Set(),
+                sales: 0,
+                profit: 0,
+                orders: 0,
+                shippingDays: [],
+                categories: new Map(),
+                segments: new Map()
+            });
+        }
+        
+        const regionData = regionMap.get(region);
+        regionData.sales += record.value || 0;
+        regionData.profit += record.profit || 0;
+        regionData.orders += 1;
+        regionData.states.add(state);
+        
+        if (record.shipping_days) {
+            regionData.shippingDays.push(record.shipping_days);
+        }
+        
+        // カテゴリ集計
+        const category = record.category || 'Unknown';
+        regionData.categories.set(category, (regionData.categories.get(category) || 0) + (record.value || 0));
+        
+        // セグメント集計
+        const segment = record.segment || 'Unknown';
+        regionData.segments.set(segment, (regionData.segments.get(segment) || 0) + (record.value || 0));
+    });
+    
+    // Mapを配列に変換
+    const regions = Array.from(regionMap.values()).map(region => ({
+        ...region,
+        states: Array.from(region.states),
+        avgShippingDays: region.shippingDays.length > 0 
+            ? region.shippingDays.reduce((a, b) => a + b, 0) / region.shippingDays.length 
+            : 0,
+        topCategory: Array.from(region.categories.entries())
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown',
+        topSegment: Array.from(region.segments.entries())
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'
+    }));
+    
+    // 売上順でソート
+    regions.sort((a, b) => b.sales - a.sales);
+    
+    return {
+        regions,
+        summary: {
+            totalRegions: regions.length,
+            topSalesRegion: regions[0] || null,
+            topProfitRegion: regions.reduce((top, current) => 
+                (current.profit > top.profit) ? current : top, regions[0] || { profit: 0 }),
+            avgShippingDays: regions.reduce((sum, region) => sum + region.avgShippingDays, 0) / regions.length || 0
+        }
+    };
+}
+
+// 地域分析KPI更新
+function updateGeographyKPIs(regionData) {
+    if (!regionData || !regionData.summary) return;
+    
+    const summary = regionData.summary;
+    
+    document.getElementById('total-regions').textContent = summary.totalRegions;
+    document.getElementById('top-region-sales').textContent = summary.topSalesRegion ? formatCurrency(summary.topSalesRegion.sales) : '--';
+    document.getElementById('top-region-name').textContent = summary.topSalesRegion ? summary.topSalesRegion.name : '--';
+    document.getElementById('top-region-profit').textContent = summary.topProfitRegion ? formatCurrency(summary.topProfitRegion.profit) : '--';
+    document.getElementById('top-region-profit-name').textContent = summary.topProfitRegion ? summary.topProfitRegion.name : '--';
+    document.getElementById('avg-shipping-days').textContent = summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + '日' : '--';
+}
+
+// 地域分析チャート描画
+function renderRegionCharts(regionData) {
+    if (!regionData || !regionData.regions) return;
+    
+    const regions = regionData.regions;
+    
+    // 地域別売上分布チャート
+    const salesChart = echarts.init(document.getElementById('region-sales-chart'));
+    salesChart.setOption({
+        tooltip: { trigger: 'item' },
+        series: [{
+            type: 'pie',
+            radius: '50%',
+            data: regions.map(region => ({
+                name: region.name,
+                value: region.sales
+            }))
+        }]
+    });
+    
+    // 地域別利益分布チャート
+    const profitChart = echarts.init(document.getElementById('region-profit-chart'));
+    profitChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-		xAxis: { type: 'category', data: cat.categories },
+        xAxis: { type: 'category', data: regions.map(r => r.name) },
+        yAxis: { type: 'value', name: '利益' },
+        series: [{
+            type: 'bar',
+            data: regions.map(r => r.profit),
+            itemStyle: { color: '#8B5CF6' }
+        }]
+    });
+    
+    // 地域別配送パフォーマンスチャート
+    const shippingChart = echarts.init(document.getElementById('region-shipping-chart'));
+    shippingChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+        legend: { data: ['売上', '平均配送日数'] },
+        xAxis: { type: 'category', data: regions.map(r => r.name) },
+        yAxis: [
+            { type: 'value', name: '売上' },
+            { type: 'value', name: '配送日数', inverse: true }
+        ],
+        series: [
+            {
+                name: '売上',
+                type: 'bar',
+                data: regions.map(r => r.sales),
+                yAxisIndex: 0,
+                itemStyle: { color: '#3B82F6' }
+            },
+            {
+                name: '平均配送日数',
+                type: 'line',
+                data: regions.map(r => r.avgShippingDays),
+                yAxisIndex: 1,
+                itemStyle: { color: '#F59E0B' }
+            }
+        ]
+    });
+    
+    // 地域別顧客セグメント分布チャート
+    const segmentChart = echarts.init(document.getElementById('region-segment-chart'));
+    segmentChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { data: regions.map(r => r.name) },
+        xAxis: { type: 'category', data: ['Consumer', 'Corporate', 'Home Office'] },
 		yAxis: { type: 'value', name: '売上' },
-		series: [{ type: 'bar', data: cat.sales, itemStyle: { color: '#3B82F6' } }]
-	});
+        series: regions.map(region => ({
+            name: region.name,
+            type: 'bar',
+            stack: 'total',
+            data: [
+                region.segments.get('Consumer') || 0,
+                region.segments.get('Corporate') || 0,
+                region.segments.get('Home Office') || 0
+            ]
+        }))
+    });
+}
 
-	const pie = echarts.init(document.getElementById('ops-pie'));
-	pie.setOption({ tooltip: { trigger: 'item' }, series: [{ type: 'pie', radius: '50%', data: cat.categories.map((c, i) => ({ name: c, value: cat.sales[i] })) }] });
+// 地域分析テーブル描画
+function renderRegionTable(regionData) {
+    if (!regionData || !regionData.regions) return;
+    
+    const tbody = document.getElementById('region-table-body');
+    tbody.innerHTML = regionData.regions.map(region => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.states.join(', ')}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.sales)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.profit)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.orders.toLocaleString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)}日</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.topCategory}</td>
+        </tr>
+    `).join('');
+}
+
+// 地域フィルター初期化
+function initializeRegionFilter(regionData) {
+    if (!regionData || !regionData.regions) return;
+    
+    const filterSelect = document.getElementById('region-filter');
+    if (!filterSelect) return;
+    
+    // 既存のオプションをクリア（「全地域」以外）
+    filterSelect.innerHTML = '<option value="">全地域</option>';
+    
+    // 地域オプションを追加
+    regionData.regions.forEach(region => {
+        const option = document.createElement('option');
+        option.value = region.name;
+        option.textContent = region.name;
+        filterSelect.appendChild(option);
+    });
+    
+    // フィルターイベントリスナー
+    filterSelect.addEventListener('change', (e) => {
+        const selectedRegion = e.target.value;
+        filterRegionData(selectedRegion, regionData);
+    });
+}
+
+// 地域データフィルタリング
+function filterRegionData(selectedRegion, regionData) {
+	if (!selectedRegion) {
+		// 全地域表示
+		renderRegionTable(regionData);
+		return;
+	}
+	
+	// 選択された地域のみ表示
+	const filteredData = {
+		...regionData,
+		regions: regionData.regions.filter(region => region.name === selectedRegion)
+	};
+	
+	renderRegionTable(filteredData);
+}
+
+// ===== 配送・運営機能 =====
+
+// 配送データの処理
+function processShippingData() {
+	if (!dashboardData || !dashboardData.records) return { shippingModes: [], summary: {} };
+	
+	const records = dashboardData.records;
+	const shippingMap = new Map();
+	
+	records.forEach(record => {
+		const shippingMode = record.shipping_mode || 'Unknown';
+		const shippingDays = record.shipping_days || 0;
+		const shippingCost = record.shipping_cost || 0;
+		
+		if (!shippingMap.has(shippingMode)) {
+			shippingMap.set(shippingMode, {
+				name: shippingMode,
+				orders: 0,
+				sales: 0,
+				profit: 0,
+				shippingDays: [],
+				shippingCosts: [],
+				categories: new Map()
+			});
+		}
+		
+		const shippingData = shippingMap.get(shippingMode);
+		shippingData.orders += 1;
+		shippingData.sales += record.value || 0;
+		shippingData.profit += record.profit || 0;
+		
+		if (shippingDays > 0) {
+			shippingData.shippingDays.push(shippingDays);
+		}
+		
+		if (shippingCost > 0) {
+			shippingData.shippingCosts.push(shippingCost);
+		}
+		
+		// カテゴリ集計
+		const category = record.category || 'Unknown';
+		shippingData.categories.set(category, (shippingData.categories.get(category) || 0) + (record.value || 0));
+	});
+	
+	// Mapを配列に変換
+	const shippingModes = Array.from(shippingMap.values()).map(mode => ({
+		...mode,
+		avgShippingDays: mode.shippingDays.length > 0 
+			? mode.shippingDays.reduce((a, b) => a + b, 0) / mode.shippingDays.length 
+			: 0,
+		totalShippingCost: mode.shippingCosts.reduce((a, b) => a + b, 0),
+		avgShippingCost: mode.shippingCosts.length > 0 
+			? mode.shippingCosts.reduce((a, b) => a + b, 0) / mode.shippingCosts.length 
+			: 0,
+		topCategory: Array.from(mode.categories.entries())
+			.sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'
+	}));
+	
+	// 売上順でソート
+	shippingModes.sort((a, b) => b.sales - a.sales);
+	
+	return {
+		shippingModes,
+		summary: {
+			totalOrders: shippingModes.reduce((sum, mode) => sum + mode.orders, 0),
+			avgShippingDays: shippingModes.reduce((sum, mode) => sum + mode.avgShippingDays, 0) / shippingModes.length || 0,
+			totalShippingCost: shippingModes.reduce((sum, mode) => sum + mode.totalShippingCost, 0),
+			fastestMode: shippingModes.reduce((fastest, current) => 
+				(current.avgShippingDays < fastest.avgShippingDays && current.avgShippingDays > 0) ? current : fastest, 
+				shippingModes.find(m => m.avgShippingDays > 0) || { name: 'Unknown', avgShippingDays: Infinity })
+		}
+	};
+}
+
+// 配送・運営KPI更新
+function updateShippingKPIs(shippingData) {
+	if (!shippingData || !shippingData.summary) return;
+	
+	const summary = shippingData.summary;
+	
+	document.getElementById('total-shipping-orders').textContent = summary.totalOrders.toLocaleString();
+	document.getElementById('avg-shipping-days-ops').textContent = summary.avgShippingDays ? summary.avgShippingDays.toFixed(1) + '日' : '--';
+	document.getElementById('total-shipping-cost').textContent = formatCurrency(summary.totalShippingCost);
+	document.getElementById('fastest-shipping-mode').textContent = summary.fastestMode.name !== 'Unknown' ? summary.fastestMode.name : '--';
+}
+
+// 配送・運営チャート描画
+function renderShippingCharts(shippingData) {
+	if (!shippingData || !shippingData.shippingModes) return;
+	
+	const modes = shippingData.shippingModes;
+	
+	// 配送モード別売上・件数チャート
+	const modeChart = echarts.init(document.getElementById('shipping-mode-chart'));
+	modeChart.setOption({
+		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+		legend: { data: ['売上', '件数'] },
+		xAxis: { type: 'category', data: modes.map(m => m.name) },
+		yAxis: [
+			{ type: 'value', name: '売上' },
+			{ type: 'value', name: '件数' }
+		],
+		series: [
+			{
+				name: '売上',
+				type: 'bar',
+				data: modes.map(m => m.sales),
+				yAxisIndex: 0,
+				itemStyle: { color: '#3B82F6' }
+			},
+			{
+				name: '件数',
+				type: 'line',
+				data: modes.map(m => m.orders),
+				yAxisIndex: 1,
+				itemStyle: { color: '#10B981' }
+			}
+		]
+	});
+	
+	// 配送モード別配送日数チャート
+	const daysChart = echarts.init(document.getElementById('shipping-days-chart'));
+	daysChart.setOption({
+		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+		xAxis: { type: 'category', data: modes.map(m => m.name) },
+		yAxis: { type: 'value', name: '平均配送日数' },
+		series: [{
+			type: 'bar',
+			data: modes.map(m => m.avgShippingDays),
+			itemStyle: { color: '#F59E0B' }
+		}]
+	});
+	
+	// 配送コスト分析チャート
+	const costChart = echarts.init(document.getElementById('shipping-cost-chart'));
+	costChart.setOption({
+		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+		legend: { data: ['売上', '配送コスト'] },
+		xAxis: { type: 'category', data: modes.map(m => m.name) },
+		yAxis: [
+			{ type: 'value', name: '売上' },
+			{ type: 'value', name: '配送コスト' }
+		],
+		series: [
+			{
+				name: '売上',
+				type: 'bar',
+				data: modes.map(m => m.sales),
+				yAxisIndex: 0,
+				itemStyle: { color: '#3B82F6' }
+			},
+			{
+				name: '配送コスト',
+				type: 'line',
+				data: modes.map(m => m.totalShippingCost),
+				yAxisIndex: 1,
+				itemStyle: { color: '#EF4444' }
+			}
+		]
+	});
+	
+	// 地域別配送パフォーマンスチャート
+	const regionPerformanceChart = echarts.init(document.getElementById('region-shipping-performance-chart'));
+	
+	// 地域別データを取得
+	const regionData = processRegionData();
+	if (regionData.regions) {
+		regionPerformanceChart.setOption({
+			tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+			legend: { data: ['売上', '平均配送日数'] },
+			xAxis: { type: 'category', data: regionData.regions.map(r => r.name) },
+			yAxis: [
+				{ type: 'value', name: '売上' },
+				{ type: 'value', name: '配送日数', inverse: true }
+			],
+			series: [
+				{
+					name: '売上',
+					type: 'bar',
+					data: regionData.regions.map(r => r.sales),
+					yAxisIndex: 0,
+					itemStyle: { color: '#3B82F6' }
+				},
+				{
+					name: '平均配送日数',
+					type: 'line',
+					data: regionData.regions.map(r => r.avgShippingDays),
+					yAxisIndex: 1,
+					itemStyle: { color: '#F59E0B' }
+				}
+			]
+		});
+	}
+}
+
+// 配送・運営テーブル描画
+function renderShippingTable(shippingData) {
+	if (!shippingData || !shippingData.shippingModes) return;
+	
+	const tbody = document.getElementById('shipping-table-body');
+	tbody.innerHTML = shippingData.shippingModes.map(mode => `
+		<tr class="hover:bg-gray-50">
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.name}</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.orders.toLocaleString()}</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.sales)}</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.profit)}</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)}日</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.totalShippingCost)}</td>
+			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.topCategory}</td>
+		</tr>
+	`).join('');
+}
+
+// 配送モードフィルター初期化
+function initializeShippingModeFilter(shippingData) {
+	if (!shippingData || !shippingData.shippingModes) return;
+	
+	const filterSelect = document.getElementById('shipping-mode-filter');
+	if (!filterSelect) return;
+	
+	// 既存のオプションをクリア（「全配送モード」以外）
+	filterSelect.innerHTML = '<option value="">全配送モード</option>';
+	
+	// 配送モードオプションを追加
+	shippingData.shippingModes.forEach(mode => {
+		const option = document.createElement('option');
+		option.value = mode.name;
+		option.textContent = mode.name;
+		filterSelect.appendChild(option);
+	});
+	
+	// フィルターイベントリスナー
+	filterSelect.addEventListener('change', (e) => {
+		const selectedMode = e.target.value;
+		filterShippingData(selectedMode, shippingData);
+	});
+}
+
+// 配送データフィルタリング
+function filterShippingData(selectedMode, shippingData) {
+	if (!selectedMode) {
+		// 全配送モード表示
+		renderShippingTable(shippingData);
+		return;
+	}
+	
+	// 選択された配送モードのみ表示
+	const filteredData = {
+		...shippingData,
+		shippingModes: shippingData.shippingModes.filter(mode => mode.name === selectedMode)
+	};
+	
+	renderShippingTable(filteredData);
 }
