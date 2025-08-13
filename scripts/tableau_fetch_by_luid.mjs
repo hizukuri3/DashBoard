@@ -2,43 +2,76 @@
 // Usage: node scripts/tableau_fetch_by_luid.mjs <DATASOURCE_LUID> [MONTHS|ALL]
 
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 function readClaudeConfig() {
-  const p = '/Users/hizukuri/Library/Application Support/Claude/claude_desktop_config.json';
-  if (!fs.existsSync(p)) throw new Error('Claude config not found');
-  const text = fs.readFileSync(p, 'utf8');
-  const json = JSON.parse(text);
-  const env = json?.mcpServers?.tableau?.env || {};
-  const SERVER = env.SERVER?.replace(/\/?$/, '') || '';
-  const SITE_NAME = env.SITE_NAME ?? '';
-  const PAT_NAME = env.PAT_NAME || '';
-  const PAT_VALUE = env.PAT_VALUE || '';
-  if (!SERVER || !PAT_NAME || !PAT_VALUE) {
-    throw new Error('Claude config missing required env');
+  const home = os.homedir();
+  const candidates = [];
+  // macOS
+  candidates.push(path.join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'));
+  // Linux (typical)
+  candidates.push(path.join(home, '.config', 'Claude', 'claude_desktop_config.json'));
+  for (const p of candidates) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const text = fs.readFileSync(p, 'utf8');
+      const json = JSON.parse(text);
+      const env = json?.mcpServers?.tableau?.env || {};
+      const SERVER = (env.SERVER || '').replace(/\/?$/, '');
+      const SITE_NAME = env.SITE_NAME ?? '';
+      const PAT_NAME = env.PAT_NAME || '';
+      const PAT_VALUE = env.PAT_VALUE || '';
+      if (SERVER && PAT_NAME && PAT_VALUE) {
+        return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+      }
+    } catch {}
   }
-  return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+  return null;
 }
 
 function readCursorConfig() {
-  const p = '/Users/hizukuri/.cursor/mcp.json';
-  if (!fs.existsSync(p)) throw new Error('Cursor config not found');
-  const text = fs.readFileSync(p, 'utf8');
-  const json = JSON.parse(text);
-  const env = json?.mcpServers?.tableau?.env || {};
-  const SERVER = (env.SERVER || env.SERVER_URL || '').replace(/\/?$/, '');
-  const SITE_NAME = env.SITE_NAME ?? '';
-  const PAT_NAME = env.PAT_NAME || '';
-  const PAT_VALUE = env.PAT_VALUE || '';
-  if (!SERVER || !PAT_NAME || !PAT_VALUE) {
-    throw new Error('Cursor config missing required env');
+  const home = os.homedir();
+  const candidates = [
+    path.join(home, '.cursor', 'mcp.json'),
+    path.join(process.cwd(), '.cursor', 'mcp.json'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const text = fs.readFileSync(p, 'utf8');
+      const json = JSON.parse(text);
+      const env = json?.mcpServers?.tableau?.env || {};
+      const SERVER = (env.SERVER || env.SERVER_URL || '').replace(/\/?$/, '');
+      const SITE_NAME = env.SITE_NAME ?? '';
+      const PAT_NAME = env.PAT_NAME || '';
+      const PAT_VALUE = env.PAT_VALUE || '';
+      if (SERVER && PAT_NAME && PAT_VALUE) {
+        return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+      }
+    } catch {}
   }
-  return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+  return null;
+}
+
+function readEnvConfig() {
+  const SERVER = (process.env.TABLEAU_SERVER || '').replace(/\/?$/, '');
+  const SITE_NAME = process.env.TABLEAU_SITE_NAME || '';
+  const PAT_NAME = process.env.TABLEAU_PAT_NAME || '';
+  const PAT_VALUE = process.env.TABLEAU_PAT_VALUE || '';
+  if (SERVER && PAT_NAME && PAT_VALUE) {
+    return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+  }
+  return null;
 }
 
 function readAnyConfig() {
-  try { return readClaudeConfig(); } catch {}
-  try { return readCursorConfig(); } catch {}
-  throw new Error('No Tableau MCP config found (Claude or Cursor)');
+  return (
+    readEnvConfig() ||
+    readCursorConfig() ||
+    readClaudeConfig() ||
+    null
+  );
 }
 
 async function rest(url, options = {}) {
@@ -186,6 +219,9 @@ async function main() {
   }
 
   const cfg = readAnyConfig();
+  if (!cfg) {
+    throw new Error('Missing Tableau credentials. Set env TABLEAU_SERVER/TABLEAU_PAT_NAME/TABLEAU_PAT_VALUE (and optional TABLEAU_SITE_NAME), or configure MCP (Cursor/Claude).');
+  }
   const { token } = await signIn(cfg);
   try {
     const rows = await queryDatasource({ SERVER: cfg.SERVER, token, datasourceLuid, months });
