@@ -6,6 +6,7 @@ let currentPage = 'overview';
 document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
     initializeFiltering();
+    initializeFilterBarUX();
     loadDashboardData();
 });
 
@@ -734,10 +735,17 @@ function initializeFiltering() {
     document.getElementById('start-date').value = threeMonthsAgo.toISOString().split('T')[0];
     document.getElementById('end-date').value = today.toISOString().split('T')[0];
     
-    // イベントリスナーの設定
+    // イベントリスナーの設定（Enterで適用、Escでリセット）
     document.getElementById('apply-filter').addEventListener('click', applyFilters);
     document.getElementById('reset-filter').addEventListener('click', resetFilters);
     document.getElementById('page-size').addEventListener('change', onPageSizeChange);
+    ['start-date','end-date'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyFilters();
+            if (e.key === 'Escape') resetFilters();
+        });
+    });
     
     // ページネーション
     document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
@@ -750,6 +758,50 @@ function initializeFiltering() {
     
     // 初期データ表示
     applyFilters();
+}
+
+// フィルタバーUI（固定・折りたたみ・状態保存）
+function initializeFilterBarUX() {
+    const KEY = 'dashboard-ui-state';
+    const toggleBtn = document.getElementById('toggle-filterbar');
+    const content = document.getElementById('filterbar-content');
+    if (!toggleBtn || !content) return;
+
+    // 保存状態の復元
+    try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        if (saved.filterbarCollapsed) {
+            content.style.display = 'none';
+            toggleBtn.textContent = '展開する';
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (saved.pageSize) {
+            const ps = document.getElementById('page-size');
+            if (ps) ps.value = saved.pageSize;
+        }
+    } catch {}
+
+    toggleBtn.addEventListener('click', () => {
+        const collapsed = content.style.display === 'none';
+        content.style.display = collapsed ? '' : 'none';
+        toggleBtn.textContent = collapsed ? '折りたたむ' : '展開する';
+        toggleBtn.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
+        persistUIState();
+    });
+
+    // ページサイズの永続化
+    const ps = document.getElementById('page-size');
+    if (ps) ps.addEventListener('change', persistUIState);
+
+    function persistUIState() {
+        try {
+            const state = {
+                filterbarCollapsed: content.style.display === 'none',
+                pageSize: document.getElementById('page-size')?.value
+            };
+            localStorage.setItem(KEY, JSON.stringify(state));
+        } catch {}
+    }
 }
 
 // フィルター適用
