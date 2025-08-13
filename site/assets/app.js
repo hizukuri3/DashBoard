@@ -787,9 +787,10 @@ function initializeFiltering() {
 // フィルタバーUI（固定・折りたたみ・状態保存）
 function initializeFilterBarUX() {
     const KEY = 'dashboard-ui-state';
+    // 左ペイン内に移したため、トップバーのトグルは存在しないケースあり
     const toggleBtn = document.getElementById('toggle-filterbar');
     const content = document.getElementById('filterbar-content');
-    if (!toggleBtn || !content) return;
+    if (!content) return;
 
     // 保存状態の復元
     try {
@@ -805,13 +806,15 @@ function initializeFilterBarUX() {
         }
     } catch {}
 
-    toggleBtn.addEventListener('click', () => {
-        const collapsed = content.style.display === 'none';
-        content.style.display = collapsed ? '' : 'none';
-        toggleBtn.textContent = collapsed ? '折りたたむ' : '展開する';
-        toggleBtn.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
-        persistUIState();
-    });
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const collapsed = content.style.display === 'none';
+            content.style.display = collapsed ? '' : 'none';
+            toggleBtn.textContent = collapsed ? '折りたたむ' : '展開する';
+            toggleBtn.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
+            persistUIState();
+        });
+    }
 
     // ページサイズの永続化
     const ps = document.getElementById('page-size');

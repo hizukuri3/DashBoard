@@ -59,23 +59,7 @@
                             <option value="all">全件</option>
                         </select>
                     </div>
-                    <button id="toggle-filterbar" class="px-2 py-1 text-sm text-gray-600 hover:text-gray-900" aria-expanded="true" aria-controls="filterbar-content">フィルター</button>
                 </div>
-            </div>
-            <!-- 折りたたみフィルター行 -->
-            <div id="filterbar-content" class="mt-2">
-              <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-4">
-                  <label class="text-sm font-medium text-gray-700">期間:</label>
-                  <div class="flex items-center space-x-2">
-                    <input type="date" id="start-date" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <span class="text-gray-500">〜</span>
-                    <input type="date" id="end-date" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  </div>
-                  <button id="apply-filter" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">適用</button>
-                  <button id="reset-filter" class="px-3 py-2 text-gray-600 text-sm font-medium hover:text-gray-800 focus:outline-none">リセット</button>
-                </div>
-              </div>
             </div>
         </div>
     </div>
@@ -83,14 +67,32 @@
     <!-- 左ペイン付きレイアウト -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
         <!-- サイドナビ（md以上で表示） -->
-        <aside class="hidden md:block w-56 flex-shrink-0">
-            <div class="card p-3 sticky top-20 space-y-2">
+        <aside class="hidden md:block w-60 flex-shrink-0">
+            <div class="card p-3 sticky top-20 space-y-3 overflow-hidden">
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active" data-page="overview">オーバービュー</button>
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="geography">地域分析</button>
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="products">製品分析</button>
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="customers">顧客分析</button>
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="time">時間分析</button>
                 <button class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="operations">配送・運営</button>
+
+                <!-- フィルター（左ペイン） -->
+                <div class="pt-2 border-t border-gray-200"></div>
+                <div>
+                    <h4 class="text-xs font-semibold text-gray-500 mb-2">フィルター</h4>
+                    <div class="space-y-2">
+                        <label class="text-xs text-gray-600">期間</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="date" id="start-date" class="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-gray-500">〜</span>
+                            <input type="date" id="end-date" class="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="apply-filter" class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none">適用</button>
+                            <button id="reset-filter" class="px-3 py-2 text-gray-600 text-sm font-medium hover:text-gray-800 focus:outline-none">リセット</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
 
@@ -157,13 +159,13 @@
                 
                 <!-- データテーブル -->
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 table-fixed">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="date">
+                                <th class="sticky left-0 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="date" style="z-index:1; max-width: 160px;">
                                     日付 <span class="sort-indicator">▼</span>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="category">
+                                <th class="sticky left-40 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="category" style="z-index:1; max-width: 200px;">
                                     カテゴリ <span class="sort-indicator">▼</span>
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="segment">
