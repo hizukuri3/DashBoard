@@ -19,19 +19,34 @@
 
 ## CD（Pages デプロイ）
 
-- トリガー: `release/*` ブランチへの push
+- トリガー: `release/*` および `hotfix/*` ブランチへの push
 - 内容: `site/` ディレクトリをそのまま GitHub Pages に公開
-- 環境: `github-pages` （Deployment branches: `release/*`）
+- 環境: `github-pages` （Deployment branches: `release/*`, `hotfix/*`）
 - 必要設定: Repository Settings → Pages → Source: GitHub Actions、Actions → Workflow permissions: Read and write
 
-## リリース手順
+## リリース手順（通常）
 
 1. `develop` から `release/x.y.z` 作成
 2. バージョン更新・CHANGELOG更新
 3. push → Pages 自動デプロイ確認
 4. `release/x.y.z` を `main` に `--no-ff` でマージ
-5. タグ `vX.Y.Z` 作成・push
+5. タグ `vX.Y.Z` 作成・push（auto-tag workflow が main push を検知して自動作成）
 6. `release/x.y.z` を `develop` にマージバック、ブランチ削除
+
+## 修正リリース手順（Hotfix）
+
+1. 発覚: 本番の `main` に対する緊急修正が必要
+2. `main` から `hotfix/x.y.z` を作成（z はパッチ番号を +1）
+3. 変更を `hotfix/x.y.z` にコミット（必要なら `main` 直コミットを revert してから cherry-pick）
+4. `package.json` の `version` を `x.y.z` に更新
+5. push（CI実行）。デプロイは `release/**` のみ自動化のため、hotfixはPRで早期に `main` へ反映
+6. `hotfix/x.y.z -> main` のPRを `--no-ff` でマージ
+7. `main` への push を auto-tag が検知し `vX.Y.Z` を作成
+8. `main -> develop` をPRでマージバック（差分取り込み）
+9. `hotfix/x.y.z` ブランチを削除（cleanup workflow 対象）
+
+注意:
+- Pages 自動デプロイは `release/**` に限定（安定運用のため）。hotfix は main 反映後に必要に応じて `release/x.y.z` を切って同内容を同期し、Pages での確認が必要な場合に対応。
 
 ## ブランチクリーンアップ
 
