@@ -66,9 +66,9 @@ hotfix/修正内容
 ## ブランチマージ手順
 
 1. Feature ブランチ → Develop ブランチ
-2. Develop ブランチ → Release ブランチ
-3. Release ブランチ → Main ブランチ
-4. Hotfix ブランチ → Main ブランチ（直接）
+2. Develop ブランチ → Release ブランチ（または Main ブランチから Hotfix ブランチ）
+3. Release ブランチ → Main ブランチ（PR、--no-ff）
+4. Hotfix ブランチ → Main ブランチ（PR、--no-ff）
 
 ## 注意事項
 
@@ -89,5 +89,5 @@ hotfix/修正内容
 ## CI/CD トリガー
 
 - CI: PR（`develop`, `main`）および push（`feature/**`, `release/**`, `hotfix/**`）で実行
-- Pages デプロイ: `release/**` への push で実行（`site/` を公開）
+- Pages デプロイ: `release/**` と `hotfix/**` への push で実行（`site/` を公開）
 - タグ付け: `main` への push 時に `package.json` の `version` をもとに `vX.Y.Z` を作成
