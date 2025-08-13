@@ -28,9 +28,14 @@
         </div>
     </header>
 
-    <!-- 期間フィルタリング -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <!-- 期間フィルタリング（固定＆折りたたみ） -->
+    <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">フィルター</span>
+                <button id="toggle-filterbar" class="px-2 py-1 text-sm text-gray-600 hover:text-gray-900" aria-expanded="true" aria-controls="filterbar-content">折りたたむ</button>
+            </div>
+            <div id="filterbar-content" class="mt-2">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center space-x-4">
                     <label class="text-sm font-medium text-gray-700">期間フィルター:</label>
@@ -55,6 +60,7 @@
                         <option value="all">全件</option>
                     </select>
                 </div>
+            </div>
             </div>
         </div>
     </div>
