@@ -579,14 +579,14 @@ function renderProductsPage() {
 	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">製品分析</h2>
+				<h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
 				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ別 売上・件数</h3>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Category</h3>
 						<div id="category-combo-chart" class="h-80"></div>
 					</div>
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ別 売上分布</h3>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales Distribution by Category</h3>
 						<div id="category-pie-chart" class="h-80"></div>
 					</div>
 				</div>
@@ -594,9 +594,9 @@ function renderProductsPage() {
 					<table class="min-w-full divide-y divide-gray-200">
 						<thead class="bg-gray-50">
 							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">売上</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">件数</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
 							</tr>
 						</thead>
 						<tbody id="products-table-body" class="bg-white divide-y divide-gray-200"></tbody>
