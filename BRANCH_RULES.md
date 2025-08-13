@@ -76,3 +76,18 @@ hotfix/修正内容
 - 日本語は使用しない
 - ブランチ名は具体的で分かりやすくする
 - 作業完了後は必ずブランチを削除する
+
+## リリースフロー標準
+
+1. `develop` から `release/x.y.z` を作成
+2. `release/**` 上ではリリースブロッカーのみ修正（CIは push 対象）
+3. `release/x.y.z -> main` のPRを作成し、`--no-ff` でマージ（履歴を残す）
+4. `main` へ push されたら自動で `vX.Y.Z` タグを作成（Actions: auto-tag-on-main）
+5. `main -> develop` のPRを作成しバックマージ（hotfixも同様に main の変更を取り込む）
+6. マージ後は `release/*` ブランチを削除（Actionsのcleanupで自動削除）
+
+## CI/CD トリガー
+
+- CI: PR（`develop`, `main`）および push（`feature/**`, `release/**`, `hotfix/**`）で実行
+- Pages デプロイ: `release/**` への push で実行（`site/` を公開）
+- タグ付け: `main` への push 時に `package.json` の `version` をもとに `vX.Y.Z` を作成
