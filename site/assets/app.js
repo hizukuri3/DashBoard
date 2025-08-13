@@ -209,7 +209,22 @@ function renderOverviewCharts() {
     if (!dashboardData || !dashboardData.records) return;
     
     console.log('オーバービューチャート描画開始');
-    
+    // ECharts テーマ登録（1回だけ）
+    if (!window.__echartsThemeRegistered) {
+        const theme = {
+            color:["#3B82F6","#10B981","#F59E0B","#8B5CF6","#EF4444","#14B8A6","#F472B6","#22C55E"],
+            textStyle:{fontFamily:"Inter, system-ui, -apple-system, Segoe UI, Roboto"},
+            axisPointer:{lineStyle:{color:"#9CA3AF"}},
+            grid:{top:24,right:16,bottom:32,left:40},
+            tooltip:{backgroundColor:"#111827",borderColor:"#374151",textStyle:{color:"#F9FAFB"}},
+            categoryAxis:{axisLine:{lineStyle:{color:"#D1D5DB"}},axisLabel:{color:"#6B7280"}},
+            valueAxis:{splitLine:{lineStyle:{color:"#E5E7EB"}},axisLabel:{color:"#6B7280"}}
+        };
+        echarts.registerTheme('dashboard', theme);
+        window.__echartsThemeRegistered = true;
+    }
+    const useTheme = 'dashboard';
+
     renderMonthlyTrendChart();
     renderGeographyChart();
     renderCategoryChart();
@@ -221,7 +236,7 @@ function renderMonthlyTrendChart() {
     const chartDom = document.getElementById('monthly-trend-chart');
     if (!chartDom) return;
     
-    const chart = echarts.init(chartDom);
+    const chart = echarts.init(chartDom, 'dashboard');
     
     // 実際のデータから月次データを生成
     const monthlyData = processMonthlyDataFromRecords();
@@ -318,7 +333,7 @@ function renderGeographyChart() {
     const chartDom = document.getElementById('geography-chart');
     if (!chartDom) return;
     
-    const chart = echarts.init(chartDom);
+    const chart = echarts.init(chartDom, 'dashboard');
     
     // 実際のデータから地域データを生成（仮の地域データ）
     const geographyData = [
@@ -357,7 +372,7 @@ function renderCategoryChart() {
     const chartDom = document.getElementById('category-chart');
     if (!chartDom) return;
     
-    const chart = echarts.init(chartDom);
+    const chart = echarts.init(chartDom, 'dashboard');
     
     // 実際のデータからカテゴリデータを生成
     const categoryData = processCategoryDataFromRecords();
