@@ -157,16 +157,16 @@ async function loadDashboardData() {
             }
         }
     } catch (error) {
-        console.error('データ読み込みエラー:', error);
-        showError('データの読み込みに失敗しました: ' + error.message);
+    console.error('Data load error:', error);
+    showError('Failed to load data: ' + error.message);
     }
 }
 
 // 最終更新時刻更新
 function updateLastUpdated(filename = 'latest.json') {
     const now = new Date();
-    const timeString = now.toLocaleString('ja-JP');
-    document.getElementById('last-updated').textContent = `最終更新: ${timeString} (${filename})`;
+    const timeString = now.toLocaleString('en-US');
+    document.getElementById('last-updated').textContent = `Last updated: ${timeString} (${filename})`;
 }
 
 // エラー表示
@@ -181,7 +181,7 @@ function showError(message) {
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">エラー</h3>
+                    <h3 class="text-sm font-medium text-red-800">Error</h3>
                     <div class="mt-2 text-sm text-red-700">
                         <p>${message}</p>
                     </div>
@@ -195,7 +195,7 @@ function showError(message) {
 function renderDashboard() {
     if (!dashboardData) return;
     
-    console.log('ダッシュボード描画開始', dashboardData);
+    console.log('Render dashboard', dashboardData);
     
     // KPI更新
     updateKPIs();
@@ -261,7 +261,7 @@ function formatCompactCurrency(value) {
 function renderOverviewCharts() {
     if (!dashboardData || !dashboardData.records) return;
     
-    console.log('オーバービューチャート描画開始');
+    console.log('Render overview charts');
     ensureEchartsTheme();
     
     renderMonthlyTrendChart();
@@ -288,9 +288,7 @@ function renderMonthlyTrendChart() {
                 type: 'cross'
             }
         },
-        legend: {
-            data: ['売上', '注文数']
-        },
+        legend: { data: ['Sales', 'Orders'] },
         grid: {
             left: '3%',
             right: '4%',
@@ -304,27 +302,27 @@ function renderMonthlyTrendChart() {
         yAxis: [
             {
                 type: 'value',
-                name: '売上',
+                name: 'Sales',
                 position: 'left',
                 axisLabel: { formatter: (v) => formatCompactCurrency(v) }
             },
             {
                 type: 'value',
-                name: '注文数',
+                name: 'Orders',
                 position: 'right',
                 axisLabel: { formatter: (v) => formatCompactNumber(v) }
             }
         ],
         series: [
             {
-                name: '売上',
+                name: 'Sales',
                 type: 'line',
                 yAxisIndex: 0,
                 data: monthlyData.sales,
                 itemStyle: { color: '#3B82F6' }
             },
             {
-                name: '注文数',
+                name: 'Orders',
                 type: 'line',
                 yAxisIndex: 1,
                 data: monthlyData.orders,
@@ -363,7 +361,9 @@ function processMonthlyDataFromRecords() {
     return {
         months: sortedMonths.map(month => {
             const [year, monthNum] = month.split('-');
-            return `${monthNum}月`;
+            const d = new Date(Number(year), Number(monthNum) - 1, 1);
+            const mon = d.toLocaleString('en-US', { month: 'short' });
+            return `${mon} ${year}`;
         }),
         sales: sortedMonths.map(month => monthlyData[month].sales),
         orders: sortedMonths.map(month => monthlyData[month].orders)
@@ -428,9 +428,7 @@ function renderCategoryChart() {
                 type: 'shadow'
             }
         },
-        legend: {
-            data: ['売上', '注文数']
-        },
+        legend: { data: ['Sales', 'Orders'] },
         grid: {
             left: '3%',
             right: '4%',
@@ -444,32 +442,20 @@ function renderCategoryChart() {
         yAxis: [
             {
                 type: 'value',
-                name: '売上',
+                name: 'Sales',
                 position: 'left',
                 axisLabel: { formatter: (v) => formatCompactCurrency(v) }
             },
             {
                 type: 'value',
-                name: '注文数',
+                name: 'Orders',
                 position: 'right',
                 axisLabel: { formatter: (v) => formatCompactNumber(v) }
             }
         ],
         series: [
-            {
-                name: '売上',
-                type: 'bar',
-                yAxisIndex: 0,
-                data: categoryData.sales,
-                itemStyle: { color: '#3B82F6' }
-            },
-            {
-                name: '注文数',
-                type: 'bar',
-                yAxisIndex: 1,
-                data: categoryData.orders,
-                itemStyle: { color: '#10B981' }
-            }
+            { name: 'Sales', type: 'bar', yAxisIndex: 0, data: categoryData.sales, itemStyle: { color: '#3B82F6' } },
+            { name: 'Orders', type: 'bar', yAxisIndex: 1, data: categoryData.orders, itemStyle: { color: '#10B981' } }
         ]
     };
     
@@ -568,7 +554,7 @@ function processSegmentDataFromRecords() {
 function renderGeographyPage() {
 	if (!dashboardData || !dashboardData.records) return;
 
-	console.log('地域分析ページ描画開始');
+    console.log('Render geography page');
 
 	// 地域別データの処理
 	const regionData = processRegionData();
@@ -624,12 +610,12 @@ function renderProductsPage() {
 	const combo = echarts.init(document.getElementById('category-combo-chart'), 'dashboard');
 	combo.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-		legend: { data: ['売上', '件数'] },
+		legend: { data: ['Sales', 'Orders'] },
 		xAxis: { type: 'category', data: cat.categories },
-		yAxis: [{ type: 'value', name: '売上' }, { type: 'value', name: '件数' }],
+		yAxis: [{ type: 'value', name: 'Sales' }, { type: 'value', name: 'Orders' }],
 		series: [
-			{ name: '売上', type: 'bar', data: cat.sales, yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
-			{ name: '件数', type: 'line', data: cat.orders, yAxisIndex: 1, itemStyle: { color: '#10B981' } }
+			{ name: 'Sales', type: 'bar', data: cat.sales, yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
+			{ name: 'Orders', type: 'line', data: cat.orders, yAxisIndex: 1, itemStyle: { color: '#10B981' } }
 		]
 	});
 
@@ -656,14 +642,14 @@ function renderCustomersPage() {
 	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">顧客分析</h2>
+				<h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
 				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">セグメント分布（売上）</h3>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Segment Distribution (Sales)</h3>
 						<div id="segment-pie-chart" class="h-80"></div>
 					</div>
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">セグメント別 売上・件数</h3>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Segment</h3>
 						<div id="segment-bar-chart" class="h-80"></div>
 					</div>
 				</div>
@@ -671,9 +657,9 @@ function renderCustomersPage() {
 					<table class="min-w-full divide-y divide-gray-200">
 						<thead class="bg-gray-50">
 							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">セグメント</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">売上</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">件数</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
+								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
 							</tr>
 						</thead>
 						<tbody id="customers-table-body" class="bg-white divide-y divide-gray-200"></tbody>
@@ -690,12 +676,12 @@ function renderCustomersPage() {
 	const bar = echarts.init(document.getElementById('segment-bar-chart'), 'dashboard');
 	bar.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-		legend: { data: ['売上', '件数'] },
+		legend: { data: ['Sales', 'Orders'] },
 		xAxis: { type: 'category', data: seg.map(s => s.name) },
-		yAxis: [{ type: 'value', name: '売上' }, { type: 'value', name: '件数' }],
+		yAxis: [{ type: 'value', name: 'Sales' }, { type: 'value', name: 'Orders' }],
 		series: [
-			{ name: '売上', type: 'bar', data: seg.map(s => s.value), yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
-			{ name: '件数', type: 'line', data: seg.map(s => Math.max(1, Math.round(s.value / 100))), yAxisIndex: 1, itemStyle: { color: '#10B981' } }
+			{ name: 'Sales', type: 'bar', data: seg.map(s => s.value), yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
+			{ name: 'Orders', type: 'line', data: seg.map(s => Math.max(1, Math.round(s.value / 100))), yAxisIndex: 1, itemStyle: { color: '#10B981' } }
 		]
 	});
 
@@ -716,15 +702,15 @@ function renderTimePage() {
 	page.innerHTML = `
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">時間分析</h2>
+				<h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
 				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">月次 売上・件数</h3>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Sales & Orders</h3>
 						<div id="time-trend-chart" class="h-80"></div>
 					</div>
 					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">月別詳細</h3>
-						<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">月</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">売上</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">件数</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">前月比</th></tr></thead><tbody id="time-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Details</h3>
+						<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MoM</th></tr></thead><tbody id="time-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
 					</div>
 				</div>
 			</div>
@@ -735,12 +721,12 @@ function renderTimePage() {
 	const chart = echarts.init(document.getElementById('time-trend-chart'), 'dashboard');
 	chart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-		legend: { data: ['売上', '件数'] },
+		legend: { data: ['Sales', 'Orders'] },
 		xAxis: { type: 'category', data: monthly.months },
-		yAxis: [{ type: 'value', name: '売上' }, { type: 'value', name: '件数' }],
+		yAxis: [{ type: 'value', name: 'Sales' }, { type: 'value', name: 'Orders' }],
 		series: [
-			{ name: '売上', type: 'line', data: monthly.sales, yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
-			{ name: '件数', type: 'line', data: monthly.orders, yAxisIndex: 1, itemStyle: { color: '#10B981' } }
+			{ name: 'Sales', type: 'line', data: monthly.sales, yAxisIndex: 0, itemStyle: { color: '#3B82F6' } },
+			{ name: 'Orders', type: 'line', data: monthly.orders, yAxisIndex: 1, itemStyle: { color: '#10B981' } }
 		]
 	});
 
@@ -759,7 +745,7 @@ function renderTimePage() {
 function renderOperationsPage() {
 	if (!dashboardData || !dashboardData.records) return;
 
-	console.log('配送・運営ページ描画開始');
+    console.log('Render operations page');
 
 	// 配送データの処理
 	const shippingData = processShippingData();
@@ -1027,7 +1013,7 @@ function updatePagination() {
     
     document.getElementById('current-page').textContent = currentPageNum;
     document.getElementById('total-pages').textContent = totalPages;
-    document.getElementById('page-info').textContent = `${startIndex + 1}-${endIndex}件を表示`;
+    document.getElementById('page-info').textContent = `Showing ${startIndex + 1}-${endIndex}`;
     
     // ボタンの有効/無効状態
     document.getElementById('prev-page').disabled = currentPageNum <= 1;
@@ -1194,12 +1180,8 @@ function renderRegionCharts(regionData) {
     profitChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         xAxis: { type: 'category', data: regions.map(r => r.name) },
-        yAxis: { type: 'value', name: '利益' },
-        series: [{
-            type: 'bar',
-            data: regions.map(r => r.profit),
-            itemStyle: { color: '#8B5CF6' }
-        }]
+        yAxis: { type: 'value', name: 'Profit' },
+        series: [{ type: 'bar', data: regions.map(r => r.profit), itemStyle: { color: '#8B5CF6' } }]
     });
     
     // 地域別配送パフォーマンスチャート
@@ -1207,22 +1189,22 @@ function renderRegionCharts(regionData) {
     registerChartInstance(shippingChart);
     shippingChart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-        legend: { data: ['売上', '平均配送日数'] },
+        legend: { data: ['Sales', 'Avg Shipping Days'] },
         xAxis: { type: 'category', data: regions.map(r => r.name) },
         yAxis: [
-            { type: 'value', name: '売上' },
-            { type: 'value', name: '配送日数', inverse: true }
+            { type: 'value', name: 'Sales' },
+            { type: 'value', name: 'Ship Days', inverse: true }
         ],
         series: [
             {
-                name: '売上',
+                name: 'Sales',
                 type: 'bar',
                 data: regions.map(r => r.sales),
                 yAxisIndex: 0,
                 itemStyle: { color: '#3B82F6' }
             },
             {
-                name: '平均配送日数',
+                name: 'Avg Shipping Days',
                 type: 'line',
                 data: regions.map(r => r.avgShippingDays),
                 yAxisIndex: 1,
@@ -1238,7 +1220,7 @@ function renderRegionCharts(regionData) {
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         legend: { data: regions.map(r => r.name) },
         xAxis: { type: 'category', data: ['Consumer', 'Corporate', 'Home Office'] },
-		yAxis: { type: 'value', name: '売上' },
+		yAxis: { type: 'value', name: 'Sales' },
         series: regions.map(region => ({
             name: region.name,
             type: 'bar',
@@ -1277,8 +1259,8 @@ function initializeRegionFilter(regionData) {
     const filterSelect = document.getElementById('region-filter');
     if (!filterSelect) return;
     
-    // 既存のオプションをクリア（「全地域」以外）
-    filterSelect.innerHTML = '<option value="">全地域</option>';
+    // Reset options
+    filterSelect.innerHTML = '<option value="">All regions</option>';
     
     // 地域オプションを追加
     regionData.regions.forEach(region => {
@@ -1409,22 +1391,22 @@ function renderShippingCharts(shippingData) {
 	registerChartInstance(modeChart);
 	modeChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-		legend: { data: ['売上', '件数'] },
+		legend: { data: ['Sales', 'Orders'] },
 		xAxis: { type: 'category', data: modes.map(m => m.name) },
 		yAxis: [
-			{ type: 'value', name: '売上' },
-			{ type: 'value', name: '件数' }
+			{ type: 'value', name: 'Sales' },
+			{ type: 'value', name: 'Orders' }
 		],
 		series: [
 			{
-				name: '売上',
+				name: 'Sales',
 				type: 'bar',
 				data: modes.map(m => m.sales),
 				yAxisIndex: 0,
 				itemStyle: { color: '#3B82F6' }
 			},
 			{
-				name: '件数',
+				name: 'Orders',
 				type: 'line',
 				data: modes.map(m => m.orders),
 				yAxisIndex: 1,
@@ -1439,7 +1421,7 @@ function renderShippingCharts(shippingData) {
 	daysChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
 		xAxis: { type: 'category', data: modes.map(m => m.name) },
-		yAxis: { type: 'value', name: '平均配送日数' },
+		yAxis: { type: 'value', name: 'Avg Ship Days' },
 		series: [{
 			type: 'bar',
 			data: modes.map(m => m.avgShippingDays),
@@ -1452,22 +1434,22 @@ function renderShippingCharts(shippingData) {
 	registerChartInstance(costChart);
 	costChart.setOption({
 		tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-		legend: { data: ['売上', '配送コスト'] },
+		legend: { data: ['Sales', 'Ship Cost'] },
 		xAxis: { type: 'category', data: modes.map(m => m.name) },
 		yAxis: [
-			{ type: 'value', name: '売上' },
-			{ type: 'value', name: '配送コスト' }
+			{ type: 'value', name: 'Sales' },
+			{ type: 'value', name: 'Ship Cost' }
 		],
 		series: [
 			{
-				name: '売上',
+				name: 'Sales',
 				type: 'bar',
 				data: modes.map(m => m.sales),
 				yAxisIndex: 0,
 				itemStyle: { color: '#3B82F6' }
 			},
 			{
-				name: '配送コスト',
+				name: 'Ship Cost',
 				type: 'line',
 				data: modes.map(m => m.totalShippingCost),
 				yAxisIndex: 1,
@@ -1485,22 +1467,22 @@ function renderShippingCharts(shippingData) {
 	if (regionData.regions) {
 		regionPerformanceChart.setOption({
 			tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-			legend: { data: ['売上', '平均配送日数'] },
+			legend: { data: ['Sales', 'Avg Shipping Days'] },
 			xAxis: { type: 'category', data: regionData.regions.map(r => r.name) },
 			yAxis: [
-				{ type: 'value', name: '売上' },
-				{ type: 'value', name: '配送日数', inverse: true }
+				{ type: 'value', name: 'Sales' },
+				{ type: 'value', name: 'Ship Days', inverse: true }
 			],
 			series: [
 				{
-					name: '売上',
+					name: 'Sales',
 					type: 'bar',
 					data: regionData.regions.map(r => r.sales),
 					yAxisIndex: 0,
 					itemStyle: { color: '#3B82F6' }
 				},
 				{
-					name: '平均配送日数',
+					name: 'Avg Shipping Days',
 					type: 'line',
 					data: regionData.regions.map(r => r.avgShippingDays),
 					yAxisIndex: 1,
@@ -1536,8 +1518,8 @@ function initializeShippingModeFilter(shippingData) {
 	const filterSelect = document.getElementById('shipping-mode-filter');
 	if (!filterSelect) return;
 	
-	// 既存のオプションをクリア（「全配送モード」以外）
-	filterSelect.innerHTML = '<option value="">全配送モード</option>';
+    // Reset options
+    filterSelect.innerHTML = '<option value="">All ship modes</option>';
 	
 	// 配送モードオプションを追加
 	shippingData.shippingModes.forEach(mode => {
