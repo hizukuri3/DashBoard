@@ -1,0 +1,20 @@
+[gitflow "branch"]
+    master = main
+    develop = develop
+
+[gitflow "prefix"]
+    feature = feature/
+    release = release/
+    hotfix = hotfix/
+    support = support/
+    versiontag = v
+
+[gitflow "path"]
+    hooks = .git/hooks
+
+[gitflow "rules"]
+    # ブランチ命名規則
+    # feature/ - 新機能開発
+    # release/ - リリース準備
+    # hotfix/ - 緊急修正
+    # support/ - サポートブランチ
