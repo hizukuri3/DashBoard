@@ -29,6 +29,17 @@ jobs:
           lfs: true
           fetch-depth: 0
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Prettier check (gate)
+        run: npx prettier --check "**/*.{js,html,css,md,json}"
+
       - name: Verify site
         run: |
           ls -la site
