@@ -1,5 +1,5 @@
-// Fetch Tableau records from a datasource LUID and save to dashboard/data/latest.json
-// Usage: node tests/fetch_tableau_by_luid.mjs <DATASOURCE_LUID> [MONTHS]
+// Fetch Tableau records from a datasource LUID and save to site/data/latest.json
+// Usage: node scripts/tableau_fetch_by_luid.mjs <DATASOURCE_LUID> [MONTHS|ALL]
 
 import fs from 'node:fs';
 
@@ -96,10 +96,23 @@ async function queryDatasource({ SERVER, token, datasourceLuid, months = 3 }) {
     datasource: { datasourceLuid },
     query: {
       fields: [
-        { fieldCaption: 'Order Date', function: 'TRUNC_DAY', fieldAlias: 'Date' },
+        // 日付
+        { fieldCaption: 'Order Date', function: 'TRUNC_DAY', fieldAlias: 'OrderDate' },
+        { fieldCaption: 'Ship Date', function: 'TRUNC_DAY', fieldAlias: 'ShipDate' },
+        // ディメンション
         { fieldCaption: 'Category', fieldAlias: 'Category' },
         { fieldCaption: 'Segment', fieldAlias: 'Segment' },
-        { fieldCaption: 'Sales', function: 'SUM', fieldAlias: 'Value' },
+        { fieldCaption: 'Region', fieldAlias: 'Region' },
+        { fieldCaption: 'State/Province', fieldAlias: 'State' },
+        { fieldCaption: 'City', fieldAlias: 'City' },
+        { fieldCaption: 'Postal Code', fieldAlias: 'PostalCode' },
+        { fieldCaption: 'Customer Name', fieldAlias: 'CustomerName' },
+        { fieldCaption: 'Product Name', fieldAlias: 'ProductName' },
+        { fieldCaption: 'Ship Mode', fieldAlias: 'ShipMode' },
+        // メジャー
+        { fieldCaption: 'Sales', function: 'SUM', fieldAlias: 'Sales' },
+        { fieldCaption: 'Profit', function: 'SUM', fieldAlias: 'Profit' },
+        { fieldCaption: 'Quantity', function: 'SUM', fieldAlias: 'Quantity' },
       ],
       filters: dateFilter,
     },
@@ -116,12 +129,28 @@ async function queryDatasource({ SERVER, token, datasourceLuid, months = 3 }) {
 
 function toRecords(rows) {
   return rows
-    .map((r) => ({
-      date: normalizeDate(r.Date ?? r['Order Date'] ?? r.date),
-      category: r.Category ?? r.category,
-      segment: r.Segment ?? r.segment,
-      value: Number(r.Value ?? r.Sales ?? r.value) || 0,
-    }))
+    .map((r) => {
+      const orderDate = normalizeDate(r.OrderDate ?? r['Order Date'] ?? r.date);
+      const shipDate = normalizeDate(r.ShipDate ?? r['Ship Date'] ?? r.shipDate);
+      const shippingDays = orderDate && shipDate ? diffDays(orderDate, shipDate) : null;
+      return {
+        date: orderDate,
+        category: r.Category ?? r.category ?? null,
+        segment: r.Segment ?? r.segment ?? null,
+        value: Number(r.Sales ?? r.Value ?? r.value) || 0,
+        profit: Number(r.Profit ?? r.profit) || 0,
+        quantity: Number(r.Quantity ?? r.quantity) || 0,
+        region: r.Region ?? null,
+        state: r.State ?? r['State/Province'] ?? null,
+        city: r.City ?? null,
+        postal_code: (r.PostalCode ?? r['Postal Code'] ?? '').toString(),
+        shipping_mode: r.ShipMode ?? r['Ship Mode'] ?? null,
+        ship_date: shipDate,
+        shipping_days: shippingDays,
+        customer_name: r.CustomerName ?? r['Customer Name'] ?? null,
+        product_name: r.ProductName ?? r['Product Name'] ?? null,
+      };
+    })
     .filter((x) => x.date && x.category && x.segment);
 }
 
@@ -135,12 +164,24 @@ function normalizeDate(input) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function diffDays(fromYmd, toYmd) {
+  try {
+    const a = new Date(fromYmd);
+    const b = new Date(toYmd);
+    const ms = b.getTime() - a.getTime();
+    if (Number.isNaN(ms)) return null;
+    return Math.max(0, Math.round(ms / 86400000));
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const datasourceLuid = process.argv[2];
   const monthsArg = (process.argv[3] || '3').toString();
-  const months = /^(?i:all)$/.test(monthsArg) || monthsArg === '0' ? null : Number(monthsArg);
+  const months = monthsArg.toLowerCase() === 'all' || monthsArg === '0' ? null : Number(monthsArg);
   if (!datasourceLuid) {
-    console.error('Usage: node tests/fetch_tableau_by_luid.mjs <DATASOURCE_LUID> [MONTHS]');
+    console.error('Usage: node scripts/tableau_fetch_by_luid.mjs <DATASOURCE_LUID> [MONTHS|ALL]');
     process.exit(1);
   }
 
@@ -150,12 +191,21 @@ async function main() {
     const rows = await queryDatasource({ SERVER: cfg.SERVER, token, datasourceLuid, months });
     const records = toRecords(rows);
     const out = {
-      meta: { generatedAt: new Date().toISOString(), source: 'tableau', datasourceLuid, months: months ?? 'ALL' },
+      meta: {
+        generatedAt: new Date().toISOString(),
+        source: 'tableau',
+        datasourceLuid,
+        months: months ?? 'ALL',
+        fields: {
+          required: ['date', 'category', 'segment', 'value'],
+          optional: ['profit','quantity','region','state','city','postal_code','shipping_mode','ship_date','shipping_days','customer_name','product_name']
+        }
+      },
       records,
     };
-    fs.mkdirSync('dashboard/data', { recursive: true });
-    fs.writeFileSync('dashboard/data/latest.json', JSON.stringify(out, null, 2));
-    console.log(`Saved ${records.length} records to dashboard/data/latest.json`);
+    fs.mkdirSync('site/data', { recursive: true });
+    fs.writeFileSync('site/data/latest.json', JSON.stringify(out, null, 2));
+    console.log(`Saved ${records.length} records to site/data/latest.json`);
   } finally {
     await signOut({ SERVER: cfg.SERVER, token });
   }
