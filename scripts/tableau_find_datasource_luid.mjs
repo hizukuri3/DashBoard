@@ -3,6 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
 const DEFAULT_TARGETS = [
   'Superstore Datasource',
@@ -11,18 +12,27 @@ const DEFAULT_TARGETS = [
 ];
 
 function readClaudeConfig() {
-  const p = '/Users/hizukuri/Library/Application Support/Claude/claude_desktop_config.json';
-  const text = fs.readFileSync(p, 'utf8');
-  const json = JSON.parse(text);
-  const env = json?.mcpServers?.tableau?.env || {};
-  const SERVER = env.SERVER?.replace(/\/?$/, '') || '';
-  const SITE_NAME = env.SITE_NAME ?? '';
-  const PAT_NAME = env.PAT_NAME || '';
-  const PAT_VALUE = env.PAT_VALUE || '';
-  if (!SERVER || !PAT_NAME || !PAT_VALUE) {
-    throw new Error('Claude config is missing required env: SERVER, PAT_NAME, PAT_VALUE');
+  const home = os.homedir();
+  const candidates = [
+    path.join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'),
+    path.join(home, '.config', 'Claude', 'claude_desktop_config.json'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const text = fs.readFileSync(p, 'utf8');
+      const json = JSON.parse(text);
+      const env = json?.mcpServers?.tableau?.env || {};
+      const SERVER = (env.SERVER || '').replace(/\/?$/, '') || '';
+      const SITE_NAME = env.SITE_NAME ?? '';
+      const PAT_NAME = env.PAT_NAME || '';
+      const PAT_VALUE = env.PAT_VALUE || '';
+      if (SERVER && PAT_NAME && PAT_VALUE) {
+        return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+      }
+    } catch {}
   }
-  return { SERVER, SITE_NAME, PAT_NAME, PAT_VALUE };
+  return null;
 }
 
 async function rest(url, options = {}) {
