@@ -1,20 +1,3 @@
-{
-  "meta": {
-    "generatedAt": "2025-08-13T09:00:00Z",
-    "source": "tableau-mcp"
-  },
-  "records": [
-    { "date": "2025-08-01", "category": "A", "segment": "East", "value": 120 },
-    { "date": "2025-08-01", "category": "B", "segment": "West", "value": 80 },
-    { "date": "2025-08-02", "category": "A", "segment": "East", "value": 150 },
-    { "date": "2025-08-02", "category": "C", "segment": "North", "value": 60 },
-    { "date": "2025-08-03", "category": "B", "segment": "South", "value": 90 },
-    { "date": "2025-08-03", "category": "A", "segment": "South", "value": 110 },
-    { "date": "2025-08-04", "category": "C", "segment": "West", "value": 70 },
-    { "date": "2025-08-04", "category": "B", "segment": "North", "value": 95 },
-    { "date": "2025-08-05", "category": "A", "segment": "East", "value": 130 },
-    { "date": "2025-08-05", "category": "C", "segment": "South", "value": 55 }
-  ]
-}
-
-
+version https://git-lfs.github.com/spec/v1
+oid sha256:a9268ae654ebca6624e962dfc12fcd0159aa0012d5eebda6c1cad0b384cb5a3b
+size 911
