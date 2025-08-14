@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [develop, main]
   push:
-    branches: ['feature/**', 'release/**', 'hotfix/**']
+    branches: ["feature/**", "release/**", "hotfix/**"]
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm i
@@ -41,4 +41,3 @@ jobs:
       - name: Sanity check - dataset size budget (<= 60MB)
         run: |
           node -e "const fs=require('fs'); const p='site/data/enhanced_latest.json'; if(fs.existsSync(p)){const s=fs.statSync(p).size; if(s>60*1024*1024){throw new Error('enhanced_latest.json too large: '+s)}}"
-
