@@ -1425,12 +1425,12 @@ function renderRegionCharts(regionData) {
   registerChartInstance(shippingChart);
   shippingChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Avg Shipping Days"] },
+    legend: { data: ["Sales", "Avg Shipping Days"], top: 8 },
     grid: { left: 56, right: 80, top: 56, bottom: 40, containLabel: true },
     xAxis: { type: "category", data: regions.map((r) => r.name), axisLabel: { margin: 10 } },
     yAxis: [
-      { type: "value", name: "Sales", nameGap: 28, axisLabel: { margin: 10, formatter: (v) => formatCompactCurrency(v) } },
-      { type: "value", name: "Ship Days", nameGap: 28, inverse: true, axisLabel: { margin: 10 } },
+      { type: "value", name: "Sales", nameLocation: "middle", nameRotate: 90, nameGap: 50, axisLabel: { margin: 10, formatter: (v) => formatCompactCurrency(v) } },
+      { type: "value", name: "Ship Days", nameLocation: "middle", nameRotate: 90, nameGap: 50, inverse: true, axisLabel: { margin: 10 } },
     ],
     series: [
       {
@@ -1459,9 +1459,9 @@ function renderRegionCharts(regionData) {
   segmentChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: regions.map((r) => r.name), top: 8, icon: "roundRect", itemWidth: 18, itemHeight: 10 },
-    grid: { left: 64, right: 64, top: 56, bottom: 40, containLabel: true },
+    grid: { left: 64, right: 64, top: 64, bottom: 40, containLabel: true },
     xAxis: { type: "category", data: ["Consumer", "Corporate", "Home Office"], axisLabel: { margin: 10 } },
-    yAxis: { type: "value", name: "Sales", nameGap: 28, axisLabel: { formatter: (v) => formatCompactCurrency(v), margin: 10 } },
+    yAxis: { type: "value", name: "Sales", nameLocation: "middle", nameRotate: 90, nameGap: 56, axisLabel: { formatter: (v) => formatCompactCurrency(v), margin: 10 } },
     series: regions.map((region) => ({
       name: region.name,
       type: "bar",
