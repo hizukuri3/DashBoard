@@ -200,6 +200,25 @@ function ensureMixedRowItemsStart(html, js) {
   return errs;
 }
 
+function ensureLegendTopAndGrid(js) {
+  const errs = [];
+  if (!js) return errs;
+  // Legend should specify top, and grid.top should be >= 56 when legend exists
+  const blocks = js.split(/setOption\(/).slice(1);
+  for (const b of blocks) {
+    if (/legend\s*:\s*\{/.test(b)) {
+      if (!/legend\s*:\s*\{[\s\S]*top\s*:\s*\d+/.test(b)) {
+        errs.push(error('Chart with legend must set legend.top to avoid overlap'));
+      }
+      const gridTopMatch = b.match(/grid\s*:\s*\{[\s\S]*top\s*:\s*(\d+)/);
+      if (!gridTopMatch || Number(gridTopMatch[1]) < 56) {
+        errs.push(error('Chart with legend must set grid.top >= 56 when legend.present'));
+      }
+    }
+  }
+  return errs;
+}
+
 function main() {
   const indexPath = path.join(SITE_DIR, 'index.html');
   if (!fs.existsSync(indexPath)) {
@@ -220,6 +239,7 @@ function main() {
     ...ensureChartContainersHaveHeight(html, js),
     ...ensureChartsRegistered(js),
     ...ensureMixedRowItemsStart(html, js),
+    ...ensureLegendTopAndGrid(js),
   ];
   if (errors.length) {
     console.error(errors.join('\n'));
