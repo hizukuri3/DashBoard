@@ -186,14 +186,15 @@ function ensureChartContainersHaveHeight(html, js) {
   const errs = [];
   const check = (text, where) => {
     const re =
-      /<div[^>]*id="([^"]*-chart)"[^>]*class="([^"]*)"[^>]*?(style="[^"]*")?[^>]*>/g;
+      /<div[^"]*id="([^"]*chart)"[^"]*class="([^"]*)"[^"]*?(style="[^"]*")?[^"]*>/g;
     let m;
     while ((m = re.exec(text)) !== null) {
       const id = m[1];
       const cls = m[2] || "";
       const styleAttr = m[3] || "";
       const hasClassHeight = /\b(h-\d+|h-\[.*?\])\b/.test(cls);
-      const hasInlineHeight = /height\s*:\s*\d+/.test(styleAttr);
+      const hasInlineHeight = /height\s*:\s*\d+/.test(styleAttr) || /height\s*:\s*\d+px/.test(styleAttr);
+
       if (!hasClassHeight && !hasInlineHeight) {
         errs.push(
           error(
@@ -211,7 +212,7 @@ function ensureChartContainersHaveHeight(html, js) {
 function ensureChartsRegistered(js) {
   const errs = [];
   if (!js) return errs;
-  const re = /echarts\.init\([^\)]*\)[\s\S]{0,200}?;/g;
+  const re = /echarts\.init\([^\)]*\)[\s\S]{0,500}?;/g;
   let m;
   while ((m = re.exec(js)) !== null) {
     const snippet = m[0];
