@@ -148,6 +148,58 @@ function ensureDateInputsHaveColSpan(html) {
   return errs;
 }
 
+function ensureChartContainersHaveHeight(html, js) {
+  const errs = [];
+  const check = (text, where) => {
+    const re = /<div[^>]*id="([^"]*-chart)"[^>]*class="([^"]*)"[^>]*?(style="[^"]*")?[^>]*>/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const id = m[1];
+      const cls = m[2] || '';
+      const styleAttr = m[3] || '';
+      const hasClassHeight = /\b(h-\d+|h-\[.*?\])\b/.test(cls);
+      const hasInlineHeight = /height\s*:\s*\d+/.test(styleAttr);
+      if (!hasClassHeight && !hasInlineHeight) {
+        errs.push(error(`${where}: chart container #${id} must specify explicit height (h-* or style="height:")`));
+      }
+    }
+  };
+  if (html) check(html, 'HTML');
+  if (js) check(js, 'JS');
+  return errs;
+}
+
+function ensureChartsRegistered(js) {
+  const errs = [];
+  if (!js) return errs;
+  const re = /echarts\.init\([^\)]*\)[\s\S]{0,200}?;/g;
+  let m;
+  while ((m = re.exec(js)) !== null) {
+    const snippet = m[0];
+    if (!/registerChartInstance\(/.test(snippet)) {
+      errs.push(error('After echarts.init(...), call registerChartInstance(instance) to enable global resize.'));
+    }
+  }
+  return errs;
+}
+
+function ensureMixedRowItemsStart(html, js) {
+  const errs = [];
+  const check = (text, where) => {
+    const re = /<div[^>]*class="([^"]*grid[^\"]*grid-cols-12[^"]*)"[\s\S]{0,800}?<div[^>]*id="[^"]*-chart"[\s\S]{0,800}?<table/gi;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const cls = m[1];
+      if (!/items-start/.test(cls)) {
+        errs.push(error(`${where}: grids that mix charts and tables must include items-start to avoid equal-height stretching.`));
+      }
+    }
+  };
+  if (html) check(html, 'HTML');
+  if (js) check(js, 'JS');
+  return errs;
+}
+
 function main() {
   const indexPath = path.join(SITE_DIR, 'index.html');
   if (!fs.existsSync(indexPath)) {
@@ -165,6 +217,9 @@ function main() {
     ...ensureNoNowrapInJS(js),
     ...ensureGridChildrenHaveColSpan(html),
     ...ensureDateInputsHaveColSpan(html),
+    ...ensureChartContainersHaveHeight(html, js),
+    ...ensureChartsRegistered(js),
+    ...ensureMixedRowItemsStart(html, js),
   ];
   if (errors.length) {
     console.error(errors.join('\n'));
