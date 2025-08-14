@@ -41,7 +41,26 @@ function ensureEchartsTheme() {
 }
 
 function registerChartInstance(instance) {
-  if (instance) chartInstances.add(instance);
+  if (!instance) return;
+  chartInstances.add(instance);
+  try {
+    const dom = instance.getDom && instance.getDom();
+    if (dom && typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => {
+        try {
+          instance.resize();
+        } catch {}
+      });
+      ro.observe(dom);
+    }
+  } catch {}
+  // レイアウト確定後に再計測
+  try {
+    setTimeout(() => instance.resize(), 0);
+    if (typeof requestAnimationFrame !== "undefined") {
+      requestAnimationFrame(() => instance.resize());
+    }
+  } catch {}
 }
 
 function resizeAllCharts() {
@@ -56,6 +75,10 @@ let __resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(__resizeTimer);
   __resizeTimer = setTimeout(resizeAllCharts, 100);
+});
+window.addEventListener("load", () => {
+  // フォント読み込み後の再レイアウトでのクリップ防止
+  setTimeout(resizeAllCharts, 0);
 });
 
 // ページ初期化
@@ -660,6 +683,7 @@ function renderProductsPage() {
 	combo.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: cat.categories },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -690,6 +714,7 @@ function renderProductsPage() {
   registerChartInstance(pie);
 	pie.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [
       {
         type: "pie",
@@ -754,6 +779,7 @@ function renderCustomersPage() {
   registerChartInstance(pie);
   pie.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [{ type: "pie", radius: "50%", data: seg }],
   });
 
@@ -765,6 +791,7 @@ function renderCustomersPage() {
 	bar.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Sales", "Orders"] },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: seg.map((s) => s.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -1355,9 +1382,9 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(salesChart);
-  registerChartInstance(salesChart);
   salesChart.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [
       {
         type: "pie",
@@ -1376,9 +1403,9 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(profitChart);
-  registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: regions.map((r) => r.name) },
     yAxis: { type: "value", name: "Profit" },
     series: [
@@ -1396,14 +1423,14 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(shippingChart);
-  registerChartInstance(shippingChart);
   shippingChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Avg Shipping Days"] },
-    xAxis: { type: "category", data: regions.map((r) => r.name) },
+    grid: { left: 56, right: 80, top: 56, bottom: 40, containLabel: true },
+    xAxis: { type: "category", data: regions.map((r) => r.name), axisLabel: { margin: 10 } },
     yAxis: [
-      { type: "value", name: "Sales" },
-      { type: "value", name: "Ship Days", inverse: true },
+      { type: "value", name: "Sales", nameGap: 28, axisLabel: { margin: 10, formatter: (v) => formatCompactCurrency(v) } },
+      { type: "value", name: "Ship Days", nameGap: 28, inverse: true, axisLabel: { margin: 10 } },
     ],
     series: [
       {
@@ -1429,12 +1456,12 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(segmentChart);
-  registerChartInstance(segmentChart);
   segmentChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    legend: { data: regions.map((r) => r.name) },
-    xAxis: { type: "category", data: ["Consumer", "Corporate", "Home Office"] },
-    yAxis: { type: "value", name: "Sales" },
+    legend: { data: regions.map((r) => r.name), top: 8, icon: "roundRect", itemWidth: 18, itemHeight: 10 },
+    grid: { left: 64, right: 64, top: 56, bottom: 40, containLabel: true },
+    xAxis: { type: "category", data: ["Consumer", "Corporate", "Home Office"], axisLabel: { margin: 10 } },
+    yAxis: { type: "value", name: "Sales", nameGap: 28, axisLabel: { formatter: (v) => formatCompactCurrency(v), margin: 10 } },
     series: regions.map((region) => ({
       name: region.name,
       type: "bar",
@@ -1641,10 +1668,10 @@ function renderShippingCharts(shippingData) {
     "dashboard",
   );
   registerChartInstance(modeChart);
-  registerChartInstance(modeChart);
   modeChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -1674,9 +1701,9 @@ function renderShippingCharts(shippingData) {
     "dashboard",
   );
   registerChartInstance(daysChart);
-  registerChartInstance(daysChart);
   daysChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: { type: "value", name: "Avg Ship Days" },
     series: [
@@ -1694,10 +1721,10 @@ function renderShippingCharts(shippingData) {
     "dashboard",
   );
   registerChartInstance(costChart);
-  registerChartInstance(costChart);
   costChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Ship Cost"] },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -1735,6 +1762,7 @@ function renderShippingCharts(shippingData) {
     regionPerformanceChart.setOption({
       tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
       legend: { data: ["Sales", "Avg Shipping Days"] },
+      grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
       xAxis: { type: "category", data: regionData.regions.map((r) => r.name) },
       yAxis: [
         { type: "value", name: "Sales" },
