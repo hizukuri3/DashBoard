@@ -18,6 +18,39 @@
 - コンテンツ幅: max 1280px、左右24pxパディング
 - グリッド: 12列/8pxベース、セクション間隔24–32px、要素8–16px
 
+### Grid System（実装ガイド）
+
+- 列: md以上は12列、smでは1列
+- ガター: 24px（Tailwind: `gap-6`）
+- コンテナ:
+  - ページシェル: `max-w-7xl`
+  - ページ内容: `max-w-5xl mx-auto`
+- レイアウト行: `grid grid-cols-12 gap-6`
+- 配置: カード/チャートに`col-span-*`を付与
+- 原則: 1カード = 1コンテンツ（1チャート/1テーブル/1KPI）。カード内に複数のチャートを同居させない
+
+標準スパン:
+
+- 小KPI: `col-span-12 md:col-span-3`
+- 中KPI: `col-span-12 md:col-span-4`
+- 半幅チャート: `col-span-12 md:col-span-6`
+- 全幅テーブル/チャート: `col-span-12`
+
+例:
+
+```html
+<div class="grid grid-cols-12 gap-6">
+  <div class="col-span-12 md:col-span-3 card">KPI 1</div>
+  <div class="col-span-12 md:col-span-3 card">KPI 2</div>
+  <div class="col-span-12 md:col-span-3 card">KPI 3</div>
+  <div class="col-span-12 md:col-span-3 card">KPI 4</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+  <div class="col-span-12 md:col-span-6 card">Chart A</div>
+  <div class="col-span-12 md:col-span-6 card">Chart B</div>
+</div>
+```
+
 ## タイポグラフィ
 
 - ベース: system-ui/Inter、14px/16px主体
@@ -43,12 +76,12 @@
 - フィルタバー: スティッキー/折りたたみ/キーボード（Enter適用・Escクリア）
 - KPIカード: 色割当（売上=Blue, 利益=Green, 件数=Purple, 率=Orange）
 - テーブル: 行高48、左2列固定、ヘッダソート、数値右寄せ、空/エラー状態あり
-- チャート: 凡例トグル、ダブルクリックでシリーズ単独表示、単位明記、負利益は赤
+- チャート: 凡例トグル、ダブルクリックでシリーズ単独表示、単位明記、負利益は赤。凡例は`top: 8`、`grid.top >= 64`（円グラフ除く）を必須。Y軸タイトルは`nameLocation: middle`+`nameRotate: 90`+`nameGap >= 50`を推奨。`axisLabel.margin >= 10`。
 - フィードバック: 成功/情報/警告/エラーのトースト、スケルトンローディング
 
 ## アクセシビリティ
 
-- Tab/Enter/Esc対応、フォーカスリング可視（2px青）
+- Skip linkを設置し、Tab/Enter/Esc対応、フォーカスリング可視（2px青）
 - aria属性/Live regionを適切に
 
 ## レスポンシブ
