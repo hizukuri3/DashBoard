@@ -11,6 +11,7 @@ import path from 'node:path';
 
 const ROOT = path.resolve(process.cwd());
 const SITE_DIR = path.join(ROOT, 'site');
+const APP_JS = path.join(SITE_DIR, 'assets', 'app.js');
 
 function read(file) {
   return fs.readFileSync(file, 'utf8');
@@ -63,6 +64,46 @@ function ensureTwelveColGrid(html) {
   return errs;
 }
 
+function ensureNoNowrapInTables(html) {
+  const errs = [];
+  // Flag whitespace-nowrap inside table cells; prefer wrap+truncate utilities
+  const cellNowrap = /<t[hd][^>]*class="[^"]*whitespace-nowrap[^"]*"/g;
+  if (cellNowrap.test(html)) {
+    errs.push(
+      error(
+        'Avoid `whitespace-nowrap` in table cells. Use truncation (overflow-hidden text-ellipsis) or allow wrap.',
+      ),
+    );
+  }
+  return errs;
+}
+
+function ensureKPICompactFormatting(js) {
+  const errs = [];
+  // Geography KPI must not use formatCurrency/toLocaleString inside updateGeographyKPIs
+  const geoFn = /function\s+updateGeographyKPIs\([\s\S]*?\)\s*\{([\s\S]*?)\}/m;
+  const geoMatch = js.match(geoFn);
+  if (geoMatch) {
+    const body = geoMatch[1];
+    if (/formatCurrency\(/.test(body)) {
+      errs.push(error('updateGeographyKPIs: use compact formatters (formatCompactCurrency/Number)'));
+    }
+  }
+  // Shipping KPI must not use toLocaleString/formatCurrency for totals
+  const shipFn = /function\s+updateShippingKPIs\([\s\S]*?\)\s*\{([\s\S]*?)\}/m;
+  const shipMatch = js.match(shipFn);
+  if (shipMatch) {
+    const body = shipMatch[1];
+    if (/toLocaleString\(/.test(body)) {
+      errs.push(error('updateShippingKPIs: use formatCompactNumber for counts'));
+    }
+    if (/formatCurrency\(/.test(body) && !/formatCompactCurrency\(/.test(body)) {
+      errs.push(error('updateShippingKPIs: use formatCompactCurrency for amounts'));
+    }
+  }
+  return errs;
+}
+
 function main() {
   const indexPath = path.join(SITE_DIR, 'index.html');
   if (!fs.existsSync(indexPath)) {
@@ -70,10 +111,13 @@ function main() {
     process.exit(0);
   }
   const html = read(indexPath);
+  const js = fs.existsSync(APP_JS) ? read(APP_JS) : '';
   const errors = [
     ...ensureDisallowLegacyGrid(html),
     ...ensurePageContentWrapper(html),
     ...ensureTwelveColGrid(html),
+    ...ensureNoNowrapInTables(html),
+    ...ensureKPICompactFormatting(js),
   ];
   if (errors.length) {
     console.error(errors.join('\n'));
