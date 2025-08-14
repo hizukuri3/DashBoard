@@ -813,10 +813,10 @@ function renderTimePage() {
   const page = document.getElementById("time");
 	page.innerHTML = `
 		<div class="space-y-6">
-			<div class="grid grid-cols-12 gap-6">
+			<div class="grid grid-cols-12 gap-6 items-start">
 				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Sales & Orders</h3>
-						<div id="time-trend-chart" class="h-80"></div>
+						<div id="time-trend-chart" class="h-64 md:h-80"></div>
 					</div>
 				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Details</h3>
