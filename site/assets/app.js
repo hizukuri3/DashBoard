@@ -534,8 +534,8 @@ function renderCategoryChart() {
         type: "shadow",
       },
     },
-    legend: { data: ["Sales", "Orders"] },
-    grid: { left: 48, right: 56, top: 48, bottom: 40, containLabel: true },
+    legend: { data: ["Sales", "Orders"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 40, containLabel: true },
     xAxis: {
       type: "category",
       data: categoryData.categories,

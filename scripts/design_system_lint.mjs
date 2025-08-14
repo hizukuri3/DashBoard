@@ -212,16 +212,27 @@ function ensureChartContainersHaveHeight(html, js) {
 function ensureChartsRegistered(js) {
   const errs = [];
   if (!js) return errs;
-  const re = /echarts\.init\([^\)]*\)[\s\S]{0,500}?;/g;
-  let m;
-  while ((m = re.exec(js)) !== null) {
-    const snippet = m[0];
-    if (!/registerChartInstance\(/.test(snippet)) {
-      errs.push(
-        error(
-          "After echarts.init(...), call registerChartInstance(instance) to enable global resize.",
-        ),
-      );
+  
+  // より正確なチェック：echarts.initの後の行でregisterChartInstanceを探す
+  const lines = js.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes('echarts.init(')) {
+      // 次の数行でregisterChartInstanceを探す
+      let found = false;
+      for (let j = i + 1; j <= Math.min(i + 5, lines.length - 1); j++) {
+        if (lines[j].includes('registerChartInstance(')) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        errs.push(
+          error(
+            "After echarts.init(...), call registerChartInstance(instance) to enable global resize.",
+          ),
+        );
+      }
     }
   }
   return errs;
@@ -252,22 +263,69 @@ function ensureMixedRowItemsStart(html, js) {
 function ensureLegendTopAndGrid(js) {
   const errs = [];
   if (!js) return errs;
-  // Legend should specify top, and grid.top should be >= 56 when legend exists
-  const blocks = js.split(/setOption\(/).slice(1);
-  for (const b of blocks) {
-    if (/legend\s*:\s*\{/.test(b)) {
-      if (!/legend\s*:\s*\{[\s\S]*top\s*:\s*\d+/.test(b)) {
-        errs.push(
-          error("Chart with legend must set legend.top to avoid overlap"),
-        );
+  
+  // より正確なチェック：setOptionのブロックごとにチェック
+  const lines = js.split('\n');
+  let inSetOption = false;
+  let hasLegend = false;
+  let legendTop = false;
+  let gridTop = false;
+  let gridTopValue = 0;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    if (line.includes('setOption(')) {
+      inSetOption = true;
+      hasLegend = false;
+      legendTop = false;
+      gridTop = false;
+      gridTopValue = 0;
+      continue;
+    }
+    
+    if (inSetOption) {
+      if (line.includes('legend:')) {
+        hasLegend = true;
       }
-      const gridTopMatch = b.match(/grid\s*:\s*\{[\s\S]*top\s*:\s*(\d+)/);
-      if (!gridTopMatch || Number(gridTopMatch[1]) < 56) {
-        errs.push(
-          error(
-            "Chart with legend must set grid.top >= 56 when legend.present",
-          ),
-        );
+      if (hasLegend && line.includes('top:')) {
+        legendTop = true;
+      }
+      if (line.includes('grid:')) {
+        // grid:の行の次の行から検索を開始
+        for (let j = i; j <= Math.min(i + 15, lines.length - 1); j++) {
+          if (lines[j].includes('top:')) {
+            const match = lines[j].match(/top:\s*(\d+)/);
+            if (match) {
+              gridTop = true;
+              gridTopValue = parseInt(match[1]);
+            }
+            break;
+          }
+          // gridブロックの終了を検出
+          if (j > i && (lines[j].includes('},') || lines[j].includes('}'))) {
+            break;
+          }
+        }
+      }
+      
+      // setOptionブロックの終了を検出
+      if (line.includes('});')) {
+        if (hasLegend) {
+          if (!legendTop) {
+            errs.push(
+              error("Chart with legend must set legend.top to avoid overlap"),
+            );
+          }
+          if (!gridTop || gridTopValue < 56) {
+            errs.push(
+              error(
+                "Chart with legend must set grid.top >= 56 when legend.present",
+              ),
+            );
+          }
+        }
+        inSetOption = false;
       }
     }
   }
