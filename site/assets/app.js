@@ -397,11 +397,12 @@ function renderMonthlyTrendChart() {
 
 // 実際のデータから月次データを処理
 function processMonthlyDataFromRecords() {
+    if (!filteredData) return { months: [], sales: [], profits: [], orders: [] };
     if (!dashboardData || !dashboardData.records) {
         return { months: [], sales: [], profits: [], orders: [] };
     }
     
-    const records = dashboardData.records;
+    const records = filteredData && filteredData.length ? filteredData : dashboardData.records;
     const monthlyData = {};
     
   records.forEach((record) => {
@@ -534,11 +535,12 @@ function renderCategoryChart() {
 
 // 実際のデータからカテゴリデータを処理
 function processCategoryDataFromRecords() {
+    if (!filteredData) return { categories: [], sales: [], orders: [] };
     if (!dashboardData || !dashboardData.records) {
         return { categories: [], sales: [], orders: [] };
     }
     
-    const records = dashboardData.records;
+    const records = filteredData && filteredData.length ? filteredData : dashboardData.records;
     const categoryData = {};
     
   records.forEach((record) => {
@@ -598,11 +600,12 @@ function renderSegmentChart() {
 
 // 実際のデータからセグメントデータを処理
 function processSegmentDataFromRecords() {
+    if (!filteredData) return [];
     if (!dashboardData || !dashboardData.records) {
         return [];
     }
     
-    const records = dashboardData.records;
+    const records = filteredData && filteredData.length ? filteredData : dashboardData.records;
     const segmentData = {};
     
   records.forEach((record) => {
@@ -935,10 +938,9 @@ let sortDirection = "asc";
 function initializeFiltering() {
   // 日付フィールドの初期値を設定
   const today = new Date();
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(today.getMonth() - 3);
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  document.getElementById("start-date").value = threeMonthsAgo
+  document.getElementById("start-date").value = firstOfMonth
     .toISOString()
     .split("T")[0];
   document.getElementById("end-date").value = today.toISOString().split("T")[0];
@@ -974,7 +976,7 @@ function initializeFiltering() {
     th.addEventListener("click", () => sortTable(th.getAttribute("data-sort")));
   });
 
-  // 初期データ表示
+  // 初期データ表示（当月1日〜今日）
   applyFilters();
 }
 
@@ -1043,6 +1045,16 @@ function applyFilters() {
 
   // KPI更新
   updateKPIsWithFilteredData();
+
+  // 可視ページの再描画（フィルタ済みデータに基づく集計へ更新）
+  try {
+    renderOverviewCharts();
+    renderGeographyPage();
+    renderProductsPage();
+    renderCustomersPage();
+    renderTimePage();
+    renderOperationsPage();
+  } catch {}
 
   console.log("フィルター適用完了:", filteredData.length, "件");
 }
@@ -1262,10 +1274,10 @@ function formatDate(dateString) {
 
 // 地域別データの処理
 function processRegionData() {
-  if (!dashboardData || !dashboardData.records)
+  if ((!filteredData || filteredData.length === 0) && (!dashboardData || !dashboardData.records))
     return { regions: [], summary: {} };
 
-  const records = dashboardData.records;
+  const records = filteredData && filteredData.length ? filteredData : dashboardData.records;
   const regionMap = new Map();
 
   records.forEach((record) => {
@@ -1548,10 +1560,10 @@ function filterRegionData(selectedRegion, regionData) {
 
 // 配送データの処理
 function processShippingData() {
-  if (!dashboardData || !dashboardData.records)
+  if ((!filteredData || filteredData.length === 0) && (!dashboardData || !dashboardData.records))
     return { shippingModes: [], summary: {} };
 
-  const records = dashboardData.records;
+  const records = filteredData && filteredData.length ? filteredData : dashboardData.records;
   const shippingMap = new Map();
 
   records.forEach((record) => {
