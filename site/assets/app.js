@@ -552,6 +552,7 @@ function renderSegmentChart() {
     if (!chartDom) return;
     
   const chart = echarts.init(chartDom, "dashboard");
+  registerChartInstance(chart);
     
     // 実際のデータからセグメントデータを生成
     const segmentData = processSegmentDataFromRecords();
@@ -633,7 +634,7 @@ function renderProductsPage() {
   const page = document.getElementById("products");
 	page.innerHTML = `
 		<div class="space-y-6">
-			<div class="grid grid-cols-12 gap-6">
+			<div class="grid grid-cols-12 gap-6 items-start">
 				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Category</h3>
 						<div id="category-combo-chart" class="h-80"></div>
@@ -665,6 +666,7 @@ function renderProductsPage() {
     document.getElementById("category-combo-chart"),
     "dashboard",
   );
+  registerChartInstance(combo);
 	combo.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
@@ -695,6 +697,7 @@ function renderProductsPage() {
     document.getElementById("category-pie-chart"),
     "dashboard",
   );
+  registerChartInstance(pie);
 	pie.setOption({
     tooltip: { trigger: "item" },
     series: [
@@ -726,7 +729,7 @@ function renderCustomersPage() {
   const page = document.getElementById("customers");
 	page.innerHTML = `
 		<div class="space-y-6">
-			<div class="grid grid-cols-12 gap-6">
+			<div class="grid grid-cols-12 gap-6 items-start">
 				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">Segment Distribution (Sales)</h3>
 						<div id="segment-pie-chart" class="h-80"></div>
@@ -758,6 +761,7 @@ function renderCustomersPage() {
     document.getElementById("segment-pie-chart"),
     "dashboard",
   );
+  registerChartInstance(pie);
   pie.setOption({
     tooltip: { trigger: "item" },
     series: [{ type: "pie", radius: "50%", data: seg }],
@@ -767,6 +771,7 @@ function renderCustomersPage() {
     document.getElementById("segment-bar-chart"),
     "dashboard",
   );
+  registerChartInstance(bar);
 	bar.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Sales", "Orders"] },
@@ -1360,6 +1365,7 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(salesChart);
+  registerChartInstance(salesChart);
   salesChart.setOption({
     tooltip: { trigger: "item" },
     series: [
@@ -1380,6 +1386,7 @@ function renderRegionCharts(regionData) {
     "dashboard",
   );
   registerChartInstance(profitChart);
+  registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     xAxis: { type: "category", data: regions.map((r) => r.name) },
@@ -1398,6 +1405,7 @@ function renderRegionCharts(regionData) {
     document.getElementById("region-shipping-chart"),
     "dashboard",
   );
+  registerChartInstance(shippingChart);
   registerChartInstance(shippingChart);
   shippingChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
@@ -1430,6 +1438,7 @@ function renderRegionCharts(regionData) {
     document.getElementById("region-segment-chart"),
     "dashboard",
   );
+  registerChartInstance(segmentChart);
   registerChartInstance(segmentChart);
   segmentChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
@@ -1642,6 +1651,7 @@ function renderShippingCharts(shippingData) {
     "dashboard",
   );
   registerChartInstance(modeChart);
+  registerChartInstance(modeChart);
   modeChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"] },
@@ -1674,6 +1684,7 @@ function renderShippingCharts(shippingData) {
     "dashboard",
   );
   registerChartInstance(daysChart);
+  registerChartInstance(daysChart);
   daysChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
@@ -1692,6 +1703,7 @@ function renderShippingCharts(shippingData) {
     document.getElementById("shipping-cost-chart"),
     "dashboard",
   );
+  registerChartInstance(costChart);
   registerChartInstance(costChart);
   costChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
@@ -1724,6 +1736,7 @@ function renderShippingCharts(shippingData) {
     document.getElementById("region-shipping-performance-chart"),
     "dashboard",
   );
+  registerChartInstance(regionPerformanceChart);
   registerChartInstance(regionPerformanceChart);
 
   // 地域別データを取得
