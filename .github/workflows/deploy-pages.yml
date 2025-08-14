@@ -5,6 +5,11 @@ on:
     branches:
       - 'release/**'
       - 'hotfix/**'
+  pull_request:
+    branches:
+      - 'release/**'
+      - 'hotfix/**'
+    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -18,14 +23,26 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'push'
+      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (with LFS)
+      - name: Checkout (push)
+        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Checkout (merged PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           lfs: true
           fetch-depth: 0
 
