@@ -635,12 +635,12 @@ function renderProductsPage() {
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
+                <div class="grid grid-cols-12 gap-6 mb-6">
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Category</h3>
 						<div id="category-combo-chart" class="h-80"></div>
 					</div>
-					<div>
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales Distribution by Category</h3>
 						<div id="category-pie-chart" class="h-80"></div>
 					</div>
@@ -729,12 +729,12 @@ function renderCustomersPage() {
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
+                <div class="grid grid-cols-12 gap-6 mb-6">
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Segment Distribution (Sales)</h3>
 						<div id="segment-pie-chart" class="h-80"></div>
 					</div>
-					<div>
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Segment</h3>
 						<div id="segment-bar-chart" class="h-80"></div>
 					</div>
@@ -817,12 +817,12 @@ function renderTimePage() {
 		<div class="space-y-6">
 			<div class="bg-white rounded-lg shadow p-6">
 				<h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
+                <div class="grid grid-cols-12 gap-6 mb-6">
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Sales & Orders</h3>
 						<div id="time-trend-chart" class="h-80"></div>
 					</div>
-					<div>
+                    <div class="col-span-12 md:col-span-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Details</h3>
 						<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MoM</th></tr></thead><tbody id="time-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
 					</div>

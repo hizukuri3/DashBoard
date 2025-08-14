@@ -168,60 +168,80 @@
         <div id="overview" class="page active">
           <div class="max-w-5xl mx-auto">
             <!-- KPI セクション -->
-            <div
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-            >
+            <div class="grid grid-cols-12 gap-6 mb-8">
               <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
-                <p class="text-3xl font-bold text-blue-600" id="total-sales">
-                  --
-                </p>
-                <p class="text-sm text-gray-500">
-                  YoY: <span id="sales-yoy">--</span>
-                </p>
+                <div class="col-span-12 md:col-span-3">
+                  <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
+                  <p class="text-3xl font-bold text-blue-600" id="total-sales">
+                    --
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    YoY: <span id="sales-yoy">--</span>
+                  </p>
+                </div>
               </div>
               <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-medium text-gray-900">Total Profit</h3>
-                <p class="text-3xl font-bold text-green-600" id="total-profit">
-                  --
-                </p>
-                <p class="text-sm text-gray-500">
-                  YoY: <span id="profit-yoy">--</span>
-                </p>
+                <div class="col-span-12 md:col-span-3">
+                  <h3 class="text-lg font-medium text-gray-900">
+                    Total Profit
+                  </h3>
+                  <p
+                    class="text-3xl font-bold text-green-600"
+                    id="total-profit"
+                  >
+                    --
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    YoY: <span id="profit-yoy">--</span>
+                  </p>
+                </div>
               </div>
               <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-medium text-gray-900">Orders</h3>
-                <p class="text-3xl font-bold text-purple-600" id="total-orders">
-                  --
-                </p>
-                <p class="text-sm text-gray-500">
-                  YoY: <span id="orders-yoy">--</span>
-                </p>
+                <div class="col-span-12 md:col-span-3">
+                  <h3 class="text-lg font-medium text-gray-900">Orders</h3>
+                  <p
+                    class="text-3xl font-bold text-purple-600"
+                    id="total-orders"
+                  >
+                    --
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    YoY: <span id="orders-yoy">--</span>
+                  </p>
+                </div>
               </div>
               <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-medium text-gray-900">Profit Margin</h3>
-                <p
-                  class="text-3xl font-bold text-orange-600"
-                  id="profit-margin"
-                >
-                  --
-                </p>
-                <p class="text-sm text-gray-500">
-                  YoY: <span id="margin-yoy">--</span>
-                </p>
+                <div class="col-span-12 md:col-span-3">
+                  <h3 class="text-lg font-medium text-gray-900">
+                    Profit Margin
+                  </h3>
+                  <p
+                    class="text-3xl font-bold text-orange-600"
+                    id="profit-margin"
+                  >
+                    --
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    YoY: <span id="margin-yoy">--</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- チャートセクション -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
+          <div class="grid grid-cols-12 gap-6 mb-8">
+            <div
+              class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+            >
               <h3 class="text-lg font-medium text-gray-900 mb-4">
                 Monthly Sales & Profit
               </h3>
               <div id="monthly-trend-chart" class="h-80"></div>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
+            <div
+              class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+            >
               <h3 class="text-lg font-medium text-gray-900 mb-4">
                 Sales by Region
               </h3>
@@ -229,14 +249,18 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
+          <div class="grid grid-cols-12 gap-6 mb-8">
+            <div
+              class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+            >
               <h3 class="text-lg font-medium text-gray-900 mb-4">
                 Sales & Orders by Category
               </h3>
               <div id="category-chart" class="h-80"></div>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
+            <div
+              class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+            >
               <h3 class="text-lg font-medium text-gray-900 mb-4">
                 Customer Segment Distribution
               </h3>
