@@ -104,6 +104,50 @@ function ensureKPICompactFormatting(js) {
   return errs;
 }
 
+function ensureNoNowrapInJS(js) {
+  const errs = [];
+  if (!js) return errs;
+  if (/whitespace-nowrap/.test(js)) {
+    errs.push(
+      error(
+        'Avoid `whitespace-nowrap` in JS-generated table cells. Use wrapping or truncation utilities instead.',
+      ),
+    );
+  }
+  return errs;
+}
+
+function ensureGridChildrenHaveColSpan(html) {
+  const errs = [];
+  // Heuristic: after each grid-cols-12 occurrence, within the next 500 chars expect at least one col-span-
+  const regex = /grid\s+grid-cols-12[^"]*"([\s\S]{0,500})/g;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const snippet = match[1] || '';
+    if (!/col-span-\d+/.test(snippet)) {
+      errs.push(
+        error(
+          'A `grid grid-cols-12` container appears without any `col-span-*` children nearby. Ensure children define responsive spans.',
+        ),
+      );
+    }
+  }
+  return errs;
+}
+
+function ensureDateInputsHaveColSpan(html) {
+  const errs = [];
+  const startMatch = html.match(/id="start-date"[^"]*class="([^"]+)"/);
+  const endMatch = html.match(/id="end-date"[^"]*class="([^"]+)"/);
+  if (startMatch && !/col-span-\d+/.test(startMatch[1])) {
+    errs.push(error('#start-date should have a `col-span-*` class inside 12-col grid'));
+  }
+  if (endMatch && !/col-span-\d+/.test(endMatch[1])) {
+    errs.push(error('#end-date should have a `col-span-*` class inside 12-col grid'));
+  }
+  return errs;
+}
+
 function main() {
   const indexPath = path.join(SITE_DIR, 'index.html');
   if (!fs.existsSync(indexPath)) {
@@ -118,6 +162,9 @@ function main() {
     ...ensureTwelveColGrid(html),
     ...ensureNoNowrapInTables(html),
     ...ensureKPICompactFormatting(js),
+    ...ensureNoNowrapInJS(js),
+    ...ensureGridChildrenHaveColSpan(html),
+    ...ensureDateInputsHaveColSpan(html),
   ];
   if (errors.length) {
     console.error(errors.join('\n'));
