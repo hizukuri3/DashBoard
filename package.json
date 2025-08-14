@@ -13,7 +13,8 @@
     "test": "echo 'No tests specified'",
     "deploy": "git push origin main",
     "lint": "echo 'No linting configured'",
-    "format": "prettier --write '**/*.{js,html,css,md,json}'"
+    "format": "prettier --write '**/*.{js,html,css,md,json}'",
+    "lint:design": "node scripts/design_system_lint.mjs"
   },
   "keywords": [
     "dashboard",
