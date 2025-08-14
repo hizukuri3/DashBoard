@@ -41,6 +41,7 @@
         border-radius: var(--radius-card);
         box-shadow: var(--shadow-sm);
       }
+      .ellipsis { display:inline-block; max-width: 12rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
       .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
       .chart { height: 320px; width: 100%; }
       @media (min-width: 768px) { .chart { height: 360px; } }
@@ -301,7 +302,7 @@
                     </select>
                   </div>
                 </div>
-                <table class="min-w-full divide-y divide-gray-200 table-fixed">
+                <table class="min-w-full divide-y divide-gray-200 table-fixed" style="table-layout:fixed">
                   <thead class="bg-gray-50">
                     <tr>
                       <th
@@ -328,31 +329,31 @@
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         data-sort="value"
                       >
-                        Sales <span class="sort-indicator">▼</span>
+                        <span class="ellipsis" title="Sales">Sales</span> <span class="sort-indicator">▼</span>
                       </th>
                       <th
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         data-sort="profit"
                       >
-                        Profit <span class="sort-indicator">▼</span>
+                        <span class="ellipsis" title="Profit">Profit</span> <span class="sort-indicator">▼</span>
                       </th>
                       <th
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         data-sort="quantity"
                       >
-                        Quantity <span class="sort-indicator">▼</span>
+                        <span class="ellipsis" title="Quantity">Quantity</span> <span class="sort-indicator">▼</span>
                       </th>
                       <th
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         data-sort="region"
                       >
-                        Region <span class="sort-indicator">▼</span>
+                        <span class="ellipsis" title="Region">Region</span> <span class="sort-indicator">▼</span>
                       </th>
                       <th
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         data-sort="shipping_mode"
                       >
-                        Ship Mode <span class="sort-indicator">▼</span>
+                        <span class="ellipsis" title="Ship Mode">Ship Mode</span> <span class="sort-indicator">▼</span>
                       </th>
                     </tr>
                   </thead>
