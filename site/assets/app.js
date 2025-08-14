@@ -332,12 +332,7 @@ function renderMonthlyTrendChart() {
         },
         },
     legend: { data: ["Sales", "Orders"] },
-        grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      containLabel: true,
-        },
+        grid: { left: 48, right: 56, top: 48, bottom: 40, containLabel: true },
         xAxis: {
       type: "category",
       data: monthlyData.months,
@@ -472,12 +467,7 @@ function renderCategoryChart() {
         },
         },
     legend: { data: ["Sales", "Orders"] },
-        grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      containLabel: true,
-        },
+        grid: { left: 48, right: 56, top: 48, bottom: 40, containLabel: true },
         xAxis: {
       type: "category",
       data: categoryData.categories,
