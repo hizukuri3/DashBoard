@@ -41,7 +41,26 @@ function ensureEchartsTheme() {
 }
 
 function registerChartInstance(instance) {
-  if (instance) chartInstances.add(instance);
+  if (!instance) return;
+  chartInstances.add(instance);
+  try {
+    const dom = instance.getDom && instance.getDom();
+    if (dom && typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => {
+        try {
+          instance.resize();
+        } catch {}
+      });
+      ro.observe(dom);
+    }
+  } catch {}
+  // レイアウト確定後に再計測
+  try {
+    setTimeout(() => instance.resize(), 0);
+    if (typeof requestAnimationFrame !== "undefined") {
+      requestAnimationFrame(() => instance.resize());
+    }
+  } catch {}
 }
 
 function resizeAllCharts() {
@@ -56,6 +75,10 @@ let __resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(__resizeTimer);
   __resizeTimer = setTimeout(resizeAllCharts, 100);
+});
+window.addEventListener("load", () => {
+  // フォント読み込み後の再レイアウトでのクリップ防止
+  setTimeout(resizeAllCharts, 0);
 });
 
 // ページ初期化
@@ -313,7 +336,7 @@ function renderOverviewCharts() {
   renderSegmentChart();
 }
 
-// 月次トレンドチャート
+// 月次トレンドチャート（Sales & Profit）
 function renderMonthlyTrendChart() {
   const chartDom = document.getElementById("monthly-trend-chart");
   if (!chartDom) return;
@@ -331,13 +354,8 @@ function renderMonthlyTrendChart() {
         type: "cross",
       },
     },
-    legend: { data: ["Sales", "Orders"] },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      containLabel: true,
-    },
+    legend: { data: ["Sales", "Profit"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 40, containLabel: true },
     xAxis: {
       type: "category",
       data: monthlyData.months,
@@ -351,9 +369,9 @@ function renderMonthlyTrendChart() {
       },
       {
         type: "value",
-        name: "Orders",
+        name: "Profit",
         position: "right",
-        axisLabel: { formatter: (v) => formatCompactNumber(v) },
+        axisLabel: { formatter: (v) => formatCompactCurrency(v) },
       },
     ],
     series: [
@@ -365,10 +383,10 @@ function renderMonthlyTrendChart() {
         itemStyle: { color: "#3B82F6" },
       },
       {
-        name: "Orders",
+        name: "Profit",
         type: "line",
         yAxisIndex: 1,
-        data: monthlyData.orders,
+        data: monthlyData.profits,
         itemStyle: { color: "#10B981" },
       },
     ],
@@ -377,13 +395,15 @@ function renderMonthlyTrendChart() {
   chart.setOption(option);
 }
 
-// 実際のデータから月次データを処理
+// 実際のデータから月次データを処理（Overviewページ用）
 function processMonthlyDataFromRecords() {
+  if (!filteredData) return { months: [], sales: [], profits: [], orders: [] };
   if (!dashboardData || !dashboardData.records) {
-    return { months: [], sales: [], orders: [] };
+    return { months: [], sales: [], profits: [], orders: [] };
   }
 
-  const records = dashboardData.records;
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
   const monthlyData = {};
 
   records.forEach((record) => {
@@ -391,10 +411,11 @@ function processMonthlyDataFromRecords() {
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
     if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = { sales: 0, orders: 0 };
+      monthlyData[monthKey] = { sales: 0, profits: 0, orders: 0 };
     }
 
     monthlyData[monthKey].sales += record.value || 0;
+    monthlyData[monthKey].profits += record.profit || 0;
     monthlyData[monthKey].orders += 1;
   });
 
@@ -409,7 +430,49 @@ function processMonthlyDataFromRecords() {
       return `${mon} ${year}`;
     }),
     sales: sortedMonths.map((month) => monthlyData[month].sales),
+    profits: sortedMonths.map((month) => monthlyData[month].profits),
     orders: sortedMonths.map((month) => monthlyData[month].orders),
+  };
+}
+
+// 実際のデータから日次データを処理（Timeページ用）
+function processDailyDataFromRecords() {
+  if (!filteredData) return { days: [], sales: [], profits: [], orders: [] };
+  if (!dashboardData || !dashboardData.records) {
+    return { days: [], sales: [], profits: [], orders: [] };
+  }
+
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
+  const dailyData = {};
+
+  records.forEach((record) => {
+    const date = new Date(record.date);
+    const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD形式
+
+    if (!dailyData[dayKey]) {
+      dailyData[dayKey] = { sales: 0, profits: 0, orders: 0 };
+    }
+
+    dailyData[dayKey].sales += record.value || 0;
+    dailyData[dayKey].profits += record.profit || 0;
+    dailyData[dayKey].orders += 1;
+  });
+
+  // 日付順にソート
+  const sortedDays = Object.keys(dailyData).sort();
+
+  return {
+    days: sortedDays.map((day) => {
+      const date = new Date(day);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    }),
+    sales: sortedDays.map((day) => dailyData[day].sales),
+    profits: sortedDays.map((day) => dailyData[day].profits),
+    orders: sortedDays.map((day) => dailyData[day].orders),
   };
 }
 
@@ -471,13 +534,8 @@ function renderCategoryChart() {
         type: "shadow",
       },
     },
-    legend: { data: ["Sales", "Orders"] },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      containLabel: true,
-    },
+    legend: { data: ["Sales", "Orders"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 40, containLabel: true },
     xAxis: {
       type: "category",
       data: categoryData.categories,
@@ -519,11 +577,13 @@ function renderCategoryChart() {
 
 // 実際のデータからカテゴリデータを処理
 function processCategoryDataFromRecords() {
+  if (!filteredData) return { categories: [], sales: [], orders: [] };
   if (!dashboardData || !dashboardData.records) {
     return { categories: [], sales: [], orders: [] };
   }
 
-  const records = dashboardData.records;
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
   const categoryData = {};
 
   records.forEach((record) => {
@@ -552,6 +612,7 @@ function renderSegmentChart() {
   if (!chartDom) return;
 
   const chart = echarts.init(chartDom, "dashboard");
+  registerChartInstance(chart);
 
   // 実際のデータからセグメントデータを生成
   const segmentData = processSegmentDataFromRecords();
@@ -582,11 +643,13 @@ function renderSegmentChart() {
 
 // 実際のデータからセグメントデータを処理
 function processSegmentDataFromRecords() {
+  if (!filteredData) return [];
   if (!dashboardData || !dashboardData.records) {
     return [];
   }
 
-  const records = dashboardData.records;
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
   const segmentData = {};
 
   records.forEach((record) => {
@@ -633,29 +696,28 @@ function renderProductsPage() {
   const page = document.getElementById("products");
   page.innerHTML = `
 		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Category</h3>
+			<div class="grid grid-cols-12 gap-6 items-start">
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Category</h3>
 						<div id="category-combo-chart" class="h-80"></div>
 					</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales Distribution by Category</h3>
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Sales Distribution by Category</h3>
 						<div id="category-pie-chart" class="h-80"></div>
 					</div>
-				</div>
+				<div class="bg-white rounded-lg shadow p-6 col-span-12">
 				<div class="overflow-x-auto">
 					<table class="min-w-full divide-y divide-gray-200">
 						<thead class="bg-gray-50">
 							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
 							</tr>
 						</thead>
 						<tbody id="products-table-body" class="bg-white divide-y divide-gray-200"></tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -666,9 +728,11 @@ function renderProductsPage() {
     document.getElementById("category-combo-chart"),
     "dashboard",
   );
+  registerChartInstance(combo);
   combo.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Orders"] },
+    legend: { data: ["Sales", "Orders"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: cat.categories },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -696,8 +760,10 @@ function renderProductsPage() {
     document.getElementById("category-pie-chart"),
     "dashboard",
   );
+  registerChartInstance(pie);
   pie.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [
       {
         type: "pie",
@@ -727,29 +793,28 @@ function renderCustomersPage() {
   const page = document.getElementById("customers");
   page.innerHTML = `
 		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Segment Distribution (Sales)</h3>
+			<div class="grid grid-cols-12 gap-6 items-start">
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Segment Distribution (Sales)</h3>
 						<div id="segment-pie-chart" class="h-80"></div>
 					</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Segment</h3>
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Sales & Orders by Segment</h3>
 						<div id="segment-bar-chart" class="h-80"></div>
 					</div>
-				</div>
+				<div class="bg-white rounded-lg shadow p-6 col-span-12">
 				<div class="overflow-x-auto">
 					<table class="min-w-full divide-y divide-gray-200">
 						<thead class="bg-gray-50">
 							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
+									<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
 							</tr>
 						</thead>
 						<tbody id="customers-table-body" class="bg-white divide-y divide-gray-200"></tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -760,8 +825,10 @@ function renderCustomersPage() {
     document.getElementById("segment-pie-chart"),
     "dashboard",
   );
+  registerChartInstance(pie);
   pie.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [{ type: "pie", radius: "50%", data: seg }],
   });
 
@@ -769,9 +836,11 @@ function renderCustomersPage() {
     document.getElementById("segment-bar-chart"),
     "dashboard",
   );
+  registerChartInstance(bar);
   bar.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    legend: { data: ["Sales", "Orders"] },
+    legend: { data: ["Sales", "Orders"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: seg.map((s) => s.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -815,47 +884,46 @@ function renderTimePage() {
   const page = document.getElementById("time");
   page.innerHTML = `
 		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Sales & Orders</h3>
-						<div id="time-trend-chart" class="h-80"></div>
+			<div class="grid grid-cols-12 gap-6 items-start">
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Daily Sales & Profit</h3>
+						<div id="time-trend-chart" style="height:320px;width:100%"></div>
 					</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Details</h3>
-						<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MoM</th></tr></thead><tbody id="time-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
-					</div>
+				<div class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6">
+					<h3 class="text-lg font-medium text-gray-900 mb-4">Daily Details</h3>
+					<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th></tr></thead><tbody id="time-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
 				</div>
 			</div>
 		</div>
 	`;
 
-  const monthly = processMonthlyDataFromRecords();
+  const daily = processDailyDataFromRecords();
   const chart = echarts.init(
     document.getElementById("time-trend-chart"),
     "dashboard",
   );
+  registerChartInstance(chart);
   chart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Orders"] },
-    xAxis: { type: "category", data: monthly.months },
+    legend: { data: ["Sales", "Profit"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
+    xAxis: { type: "category", data: daily.days },
     yAxis: [
       { type: "value", name: "Sales" },
-      { type: "value", name: "Orders" },
+      { type: "value", name: "Profit" },
     ],
     series: [
       {
         name: "Sales",
         type: "line",
-        data: monthly.sales,
+        data: daily.sales,
         yAxisIndex: 0,
         itemStyle: { color: "#3B82F6" },
       },
       {
-        name: "Orders",
+        name: "Profit",
         type: "line",
-        data: monthly.orders,
+        data: daily.profits,
         yAxisIndex: 1,
         itemStyle: { color: "#10B981" },
       },
@@ -863,19 +931,12 @@ function renderTimePage() {
   });
 
   const tbody = document.getElementById("time-table-body");
-  tbody.innerHTML = monthly.months
-    .map((m, i) => {
-      const sales = monthly.sales[i];
-      const orders = monthly.orders[i];
-      let growth = "N/A";
-      if (i > 0 && monthly.sales[i - 1] !== 0) {
-        growth =
-          (
-            ((sales - monthly.sales[i - 1]) / monthly.sales[i - 1]) *
-            100
-          ).toFixed(1) + "%";
-      }
-      return `<tr><td class="px-6 py-3 text-sm">${m}</td><td class="px-6 py-3 text-sm">${formatCurrency(sales)}</td><td class="px-6 py-3 text-sm">${orders.toLocaleString()}</td><td class="px-6 py-3 text-sm">${growth}</td></tr>`;
+  tbody.innerHTML = daily.days
+    .map((day, i) => {
+      const sales = daily.sales[i];
+      const profit = daily.profits[i];
+      const orders = daily.orders[i];
+      return `<tr><td class="px-6 py-3 text-sm">${day}</td><td class="px-6 py-3 text-sm">${formatCurrency(sales)}</td><td class="px-6 py-3 text-sm">${formatCurrency(profit)}</td><td class="px-6 py-3 text-sm">${orders.toLocaleString()}</td></tr>`;
     })
     .join("");
 }
@@ -914,10 +975,9 @@ let sortDirection = "asc";
 function initializeFiltering() {
   // 日付フィールドの初期値を設定
   const today = new Date();
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(today.getMonth() - 3);
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  document.getElementById("start-date").value = threeMonthsAgo
+  document.getElementById("start-date").value = firstOfMonth
     .toISOString()
     .split("T")[0];
   document.getElementById("end-date").value = today.toISOString().split("T")[0];
@@ -953,7 +1013,7 @@ function initializeFiltering() {
     th.addEventListener("click", () => sortTable(th.getAttribute("data-sort")));
   });
 
-  // 初期データ表示
+  // 初期データ表示（当月1日〜今日）
   applyFilters();
 }
 
@@ -1023,6 +1083,16 @@ function applyFilters() {
   // KPI更新
   updateKPIsWithFilteredData();
 
+  // 可視ページの再描画（フィルタ済みデータに基づく集計へ更新）
+  try {
+    renderOverviewCharts();
+    renderGeographyPage();
+    renderProductsPage();
+    renderCustomersPage();
+    renderTimePage();
+    renderOperationsPage();
+  } catch {}
+
   console.log("フィルター適用完了:", filteredData.length, "件");
 }
 
@@ -1058,7 +1128,7 @@ function renderDataTable() {
       (record) => `
         <tr class="hover:bg-gray-50">
             <td class="sticky left-0 bg-white px-6 py-4 text-sm text-gray-900">${formatDate(record.date)}</td>
-            <td class="sticky left-40 bg-white px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.category}">${record.category}</span></td>
+            <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.category}">${record.category}</span></td>
             <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.segment}">${record.segment}</span></td>
             <td class="px-6 py-4 text-sm text-right text-gray-900">${formatCurrency(record.value, 0)}</td>
             <td class="px-6 py-4 text-sm text-right text-gray-900">${record.profit ? formatCurrency(record.profit, 0) : "--"}</td>
@@ -1213,16 +1283,16 @@ function updateKPIsWithFilteredData() {
 
   // KPI表示更新（フィルタリングされたデータ）
   document.getElementById("total-sales").textContent =
-    formatCurrency(totalSales);
+    formatCompactCurrency(totalSales);
   document.getElementById("total-orders").textContent =
-    totalOrders.toLocaleString();
+    formatCompactNumber(totalOrders);
 
   // 利益率（仮の値）
   const profitMargin = 12.5;
   const totalProfit = totalSales * 0.125;
 
   document.getElementById("total-profit").textContent =
-    formatCurrency(totalProfit);
+    formatCompactCurrency(totalProfit);
   document.getElementById("profit-margin").textContent =
     profitMargin.toFixed(1) + "%";
 }
@@ -1241,10 +1311,14 @@ function formatDate(dateString) {
 
 // 地域別データの処理
 function processRegionData() {
-  if (!dashboardData || !dashboardData.records)
+  if (
+    (!filteredData || filteredData.length === 0) &&
+    (!dashboardData || !dashboardData.records)
+  )
     return { regions: [], summary: {} };
 
-  const records = dashboardData.records;
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
   const regionMap = new Map();
 
   records.forEach((record) => {
@@ -1336,13 +1410,13 @@ function updateGeographyKPIs(regionData) {
   document.getElementById("total-regions").textContent = summary.totalRegions;
   document.getElementById("top-region-sales").textContent =
     summary.topSalesRegion
-      ? formatCurrency(summary.topSalesRegion.sales)
+      ? formatCompactCurrency(summary.topSalesRegion.sales)
       : "--";
   document.getElementById("top-region-name").textContent =
     summary.topSalesRegion ? summary.topSalesRegion.name : "--";
   document.getElementById("top-region-profit").textContent =
     summary.topProfitRegion
-      ? formatCurrency(summary.topProfitRegion.profit)
+      ? formatCompactCurrency(summary.topProfitRegion.profit)
       : "--";
   document.getElementById("top-region-profit-name").textContent =
     summary.topProfitRegion ? summary.topProfitRegion.name : "--";
@@ -1366,6 +1440,7 @@ function renderRegionCharts(regionData) {
   registerChartInstance(salesChart);
   salesChart.setOption({
     tooltip: { trigger: "item" },
+    grid: { left: 24, right: 24, top: 24, bottom: 24, containLabel: true },
     series: [
       {
         type: "pie",
@@ -1386,6 +1461,7 @@ function renderRegionCharts(regionData) {
   registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: regions.map((r) => r.name) },
     yAxis: { type: "value", name: "Profit" },
     series: [
@@ -1405,11 +1481,31 @@ function renderRegionCharts(regionData) {
   registerChartInstance(shippingChart);
   shippingChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Avg Shipping Days"] },
-    xAxis: { type: "category", data: regions.map((r) => r.name) },
+    legend: { data: ["Sales", "Avg Shipping Days"], top: 8 },
+    grid: { left: 56, right: 80, top: 64, bottom: 40, containLabel: true },
+    xAxis: {
+      type: "category",
+      data: regions.map((r) => r.name),
+      axisLabel: { margin: 10 },
+    },
     yAxis: [
-      { type: "value", name: "Sales" },
-      { type: "value", name: "Ship Days", inverse: true },
+      {
+        type: "value",
+        name: "Sales",
+        nameLocation: "middle",
+        nameRotate: 90,
+        nameGap: 50,
+        axisLabel: { margin: 10, formatter: (v) => formatCompactCurrency(v) },
+      },
+      {
+        type: "value",
+        name: "Ship Days",
+        nameLocation: "middle",
+        nameRotate: 90,
+        nameGap: 50,
+        inverse: true,
+        axisLabel: { margin: 10 },
+      },
     ],
     series: [
       {
@@ -1437,9 +1533,27 @@ function renderRegionCharts(regionData) {
   registerChartInstance(segmentChart);
   segmentChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    legend: { data: regions.map((r) => r.name) },
-    xAxis: { type: "category", data: ["Consumer", "Corporate", "Home Office"] },
-    yAxis: { type: "value", name: "Sales" },
+    legend: {
+      data: regions.map((r) => r.name),
+      top: 8,
+      icon: "roundRect",
+      itemWidth: 18,
+      itemHeight: 10,
+    },
+    grid: { left: 64, right: 64, top: 64, bottom: 40, containLabel: true },
+    xAxis: {
+      type: "category",
+      data: ["Consumer", "Corporate", "Home Office"],
+      axisLabel: { margin: 10 },
+    },
+    yAxis: {
+      type: "value",
+      name: "Sales",
+      nameLocation: "middle",
+      nameRotate: 90,
+      nameGap: 56,
+      axisLabel: { formatter: (v) => formatCompactCurrency(v), margin: 10 },
+    },
     series: regions.map((region) => ({
       name: region.name,
       type: "bar",
@@ -1462,13 +1576,13 @@ function renderRegionTable(regionData) {
     .map(
       (region) => `
         <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.states.join(", ")}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.sales)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(region.profit)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.orders.toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.avgShippingDays.toFixed(1)} days</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${region.topCategory}</td>
+            <td class="px-6 py-4 text-sm text-gray-900 break-words">${region.name}</td>
+            <td class="px-6 py-4 text-sm text-gray-900 break-words">${region.states.join(", ")}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">${formatCompactCurrency(region.sales)}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">${formatCompactCurrency(region.profit)}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">${formatCompactNumber(region.orders)}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">${region.avgShippingDays.toFixed(1)} days</td>
+            <td class="px-6 py-4 text-sm text-gray-900 break-words">${region.topCategory}</td>
         </tr>
     `,
     )
@@ -1523,10 +1637,14 @@ function filterRegionData(selectedRegion, regionData) {
 
 // 配送データの処理
 function processShippingData() {
-  if (!dashboardData || !dashboardData.records)
+  if (
+    (!filteredData || filteredData.length === 0) &&
+    (!dashboardData || !dashboardData.records)
+  )
     return { shippingModes: [], summary: {} };
 
-  const records = dashboardData.records;
+  const records =
+    filteredData && filteredData.length ? filteredData : dashboardData.records;
   const shippingMap = new Map();
 
   records.forEach((record) => {
@@ -1623,14 +1741,13 @@ function updateShippingKPIs(shippingData) {
   const summary = shippingData.summary;
 
   document.getElementById("total-shipping-orders").textContent =
-    summary.totalOrders.toLocaleString();
+    formatCompactNumber(summary.totalOrders);
   document.getElementById("avg-shipping-days-ops").textContent =
     summary.avgShippingDays
       ? summary.avgShippingDays.toFixed(1) + " days"
       : "--";
-  document.getElementById("total-shipping-cost").textContent = formatCurrency(
-    summary.totalShippingCost,
-  );
+  document.getElementById("total-shipping-cost").textContent =
+    formatCompactCurrency(summary.totalShippingCost);
   document.getElementById("fastest-shipping-mode").textContent =
     summary.fastestMode.name !== "Unknown" ? summary.fastestMode.name : "--";
 }
@@ -1649,7 +1766,8 @@ function renderShippingCharts(shippingData) {
   registerChartInstance(modeChart);
   modeChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Orders"] },
+    legend: { data: ["Sales", "Orders"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -1681,6 +1799,7 @@ function renderShippingCharts(shippingData) {
   registerChartInstance(daysChart);
   daysChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: { type: "value", name: "Avg Ship Days" },
     series: [
@@ -1700,7 +1819,8 @@ function renderShippingCharts(shippingData) {
   registerChartInstance(costChart);
   costChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: { data: ["Sales", "Ship Cost"] },
+    legend: { data: ["Sales", "Ship Cost"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: modes.map((m) => m.name) },
     yAxis: [
       { type: "value", name: "Sales" },
@@ -1736,7 +1856,8 @@ function renderShippingCharts(shippingData) {
   if (regionData.regions) {
     regionPerformanceChart.setOption({
       tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-      legend: { data: ["Sales", "Avg Shipping Days"] },
+      legend: { data: ["Sales", "Avg Shipping Days"], top: 8 },
+      grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
       xAxis: { type: "category", data: regionData.regions.map((r) => r.name) },
       yAxis: [
         { type: "value", name: "Sales" },
@@ -1771,13 +1892,13 @@ function renderShippingTable(shippingData) {
     .map(
       (mode) => `
 		<tr class="hover:bg-gray-50">
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.name}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.orders.toLocaleString()}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.sales)}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.profit)}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)} days</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(mode.totalShippingCost)}</td>
-			<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${mode.topCategory}</td>
+			<td class="px-6 py-4 text-sm text-gray-900 break-words">${mode.name}</td>
+			<td class="px-6 py-4 text-sm text-gray-900">${formatCompactNumber(mode.orders)}</td>
+			<td class="px-6 py-4 text-sm text-gray-900">${formatCompactCurrency(mode.sales)}</td>
+			<td class="px-6 py-4 text-sm text-gray-900">${formatCompactCurrency(mode.profit)}</td>
+			<td class="px-6 py-4 text-sm text-gray-900">${mode.avgShippingDays.toFixed(1)} days</td>
+			<td class="px-6 py-4 text-sm text-gray-900">${formatCompactCurrency(mode.totalShippingCost)}</td>
+			<td class="px-6 py-4 text-sm text-gray-900 break-words">${mode.topCategory}</td>
 		</tr>
 	`,
     )

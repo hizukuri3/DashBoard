@@ -1,6 +1,6 @@
 {
   "name": "superstore-dashboard",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "A beautiful dashboard application that fetches data from Tableau data sources",
   "main": "site/index.html",
   "scripts": {
@@ -13,7 +13,8 @@
     "test": "echo 'No tests specified'",
     "deploy": "git push origin main",
     "lint": "echo 'No linting configured'",
-    "format": "prettier --write '**/*.{js,html,css,md,json}'"
+    "format": "prettier --write '**/*.{js,html,css,md,json}'",
+    "lint:design": "node scripts/design_system_lint.mjs"
   },
   "keywords": [
     "dashboard",
