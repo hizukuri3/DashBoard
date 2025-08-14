@@ -1208,16 +1208,16 @@ function updateKPIsWithFilteredData() {
 
   // KPI表示更新（フィルタリングされたデータ）
   document.getElementById("total-sales").textContent =
-    formatCurrency(totalSales);
+    formatCompactCurrency(totalSales);
   document.getElementById("total-orders").textContent =
-    totalOrders.toLocaleString();
+    formatCompactNumber(totalOrders);
 
   // 利益率（仮の値）
   const profitMargin = 12.5;
   const totalProfit = totalSales * 0.125;
 
   document.getElementById("total-profit").textContent =
-    formatCurrency(totalProfit);
+    formatCompactCurrency(totalProfit);
   document.getElementById("profit-margin").textContent =
     profitMargin.toFixed(1) + "%";
 }

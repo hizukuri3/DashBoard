@@ -30,6 +30,9 @@ jobs:
       - name: Prettier check
         run: npx prettier --check "**/*.{js,html,css,md,json}"
 
+      - name: Design system lint
+        run: npm run -s lint:design
+
       - name: Sanity check - site exists
         run: |
           test -f site/index.html
