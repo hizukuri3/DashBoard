@@ -1079,7 +1079,7 @@ function renderDataTable() {
       (record) => `
         <tr class="hover:bg-gray-50">
             <td class="sticky left-0 bg-white px-6 py-4 text-sm text-gray-900">${formatDate(record.date)}</td>
-            <td class="sticky left-40 bg-white px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.category}">${record.category}</span></td>
+            <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.category}">${record.category}</span></td>
             <td class="px-6 py-4 text-sm text-gray-900"><span class="ellipsis" title="${record.segment}">${record.segment}</span></td>
             <td class="px-6 py-4 text-sm text-right text-gray-900">${formatCurrency(record.value, 0)}</td>
             <td class="px-6 py-4 text-sm text-right text-gray-900">${record.profit ? formatCurrency(record.profit, 0) : "--"}</td>
