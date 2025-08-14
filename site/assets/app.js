@@ -336,7 +336,7 @@ function renderOverviewCharts() {
     renderSegmentChart();
 }
 
-// 月次トレンドチャート
+// 月次トレンドチャート（Sales & Profit）
 function renderMonthlyTrendChart() {
   const chartDom = document.getElementById("monthly-trend-chart");
     if (!chartDom) return;
@@ -354,7 +354,7 @@ function renderMonthlyTrendChart() {
         type: "cross",
         },
         },
-    legend: { data: ["Sales", "Orders"], top: 8 },
+    legend: { data: ["Sales", "Profit"], top: 8 },
         grid: { left: 48, right: 56, top: 64, bottom: 40, containLabel: true },
         xAxis: {
       type: "category",
@@ -369,9 +369,9 @@ function renderMonthlyTrendChart() {
       },
       {
         type: "value",
-        name: "Orders",
+        name: "Profit",
         position: "right",
-        axisLabel: { formatter: (v) => formatCompactNumber(v) },
+        axisLabel: { formatter: (v) => formatCompactCurrency(v) },
       },
         ],
         series: [
@@ -383,10 +383,10 @@ function renderMonthlyTrendChart() {
         itemStyle: { color: "#3B82F6" },
             },
             {
-        name: "Orders",
+        name: "Profit",
         type: "line",
                 yAxisIndex: 1,
-                data: monthlyData.orders,
+                data: monthlyData.profits,
         itemStyle: { color: "#10B981" },
       },
     ],
@@ -398,7 +398,7 @@ function renderMonthlyTrendChart() {
 // 実際のデータから月次データを処理
 function processMonthlyDataFromRecords() {
     if (!dashboardData || !dashboardData.records) {
-        return { months: [], sales: [], orders: [] };
+        return { months: [], sales: [], profits: [], orders: [] };
     }
     
     const records = dashboardData.records;
@@ -409,10 +409,11 @@ function processMonthlyDataFromRecords() {
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
         
         if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { sales: 0, orders: 0 };
+            monthlyData[monthKey] = { sales: 0, profits: 0, orders: 0 };
         }
         
         monthlyData[monthKey].sales += record.value || 0;
+        monthlyData[monthKey].profits += record.profit || 0;
         monthlyData[monthKey].orders += 1;
     });
     
@@ -427,6 +428,7 @@ function processMonthlyDataFromRecords() {
       return `${mon} ${year}`;
     }),
     sales: sortedMonths.map((month) => monthlyData[month].sales),
+    profits: sortedMonths.map((month) => monthlyData[month].profits),
     orders: sortedMonths.map((month) => monthlyData[month].orders),
     };
 }
@@ -788,7 +790,7 @@ function renderCustomersPage() {
     "dashboard",
   );
   registerChartInstance(bar);
-  bar.setOption({
+	bar.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Sales", "Orders"], top: 8 },
     grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
@@ -854,7 +856,7 @@ function renderTimePage() {
     "dashboard",
   );
   registerChartInstance(chart);
-  chart.setOption({
+	chart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: { data: ["Sales", "Orders"], top: 8 },
     grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
