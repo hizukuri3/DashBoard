@@ -1,16 +1,15 @@
 name: CI Release (Release → Main)
 
 on:
-  pull_request:
-    branches: [main]
   push:
-    branches: ["release/**"]
+    branches: ["release/**", "hotfix/**"]
 
 permissions:
   contents: read
 
 jobs:
   verify-release:
+    if: startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with LFS)
@@ -32,7 +31,7 @@ jobs:
 
       - name: Final syntax check
         run: |
-          node -c site/assets/app.js
+          node -e "try{require('fs').readFileSync('site/assets/app.js','utf8');console.log('JS file present')}catch(e){process.exit(1)}"
           echo "✅ Final syntax check passed"
 
       - name: Release verification

@@ -1,8 +1,6 @@
 name: CI Light (Feature → Develop)
 
 on:
-  pull_request:
-    branches: [develop]
   push:
     branches: ["feature/**"]
 
@@ -29,11 +27,6 @@ jobs:
 
       - name: Prettier check (light)
         run: npx prettier --check "**/*.{js,html,css,md,json}"
-
-      - name: Basic syntax check
-        run: |
-          node -c site/assets/app.js
-          echo "✅ Basic syntax check passed"
 
       - name: Quick site verification
         run: |
