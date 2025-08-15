@@ -26,6 +26,12 @@ feature/機能名-詳細
 - feature/api-integration
 ```
 
+#### 1 branch = 1 feature（重要ルール）
+
+- 1つの `feature/*` ブランチには「1機能」だけを含める
+- 複数機能をまとめない（レビュー・ロールバック・リリースの安全性向上）
+- 別機能が発生したら新しい `feature/*` を切る
+
 ### Release ブランチ
 
 ```
@@ -65,7 +71,7 @@ hotfix/修正内容
 
 ## ブランチマージ手順
 
-1. Feature ブランチ → Develop ブランチ
+1. Feature ブランチ（1 branch = 1 feature） → Develop ブランチ
 2. Develop ブランチ → Release ブランチ（または Main ブランチから Hotfix ブランチ）
 3. Release ブランチ → Main ブランチ（PR、--no-ff）
 4. Hotfix ブランチ → Main ブランチ（PR、--no-ff）
