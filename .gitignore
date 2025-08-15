@@ -3,3 +3,13 @@
 *.log
 node_modules/
 
+# Test artifacts
+tests/**/*.png
+tests/**/*-snapshots/
+playwright-report/
+test-results/
+*.png
+
+# Package files
+package-lock.json
+
