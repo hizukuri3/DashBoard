@@ -1,0 +1,57 @@
+name: CI Guards
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  version-and-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read current version (branch)
+        id: cur
+        run: |
+          echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Read main version (baseline)
+        id: base
+        run: |
+          git fetch origin main --quiet
+          git show origin/main:package.json > /tmp/main_package.json
+          echo "version=$(jq -r .version /tmp/main_package.json)" >> $GITHUB_OUTPUT
+
+      - name: Guard: prevent version downgrade
+        run: |
+          v_cur='${{ steps.cur.outputs.version }}'
+          v_base='${{ steps.base.outputs.version }}'
+          if [ -n "$v_cur" ] && [ -n "$v_base" ]; then
+            printf "Current: %s, Main: %s\n" "$v_cur" "$v_base"
+          fi
+          if dpkg --compare-versions "$v_cur" lt "$v_base"; then
+            echo "Version downgrade detected ($v_cur < $v_base)" >&2
+            exit 1
+          fi
+
+      - name: Guard: only release/hotfix may change version
+        if: github.base_ref == 'develop'
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -c '^package.json$' || true)
+          if [ "$CHANGED" -gt 0 ]; then
+            echo "package.json changed on PR to develop. Only release/hotfix should bump versions." >&2
+            exit 1
+          fi
+
+      - name: Guard: disallow known transient files
+        run: |
+          if git ls-files --error-unmatch pr_body.md 2>/dev/null; then
+            echo "pr_body.md must not be committed (generated at runtime)." >&2
+            exit 1
+          fi
+
