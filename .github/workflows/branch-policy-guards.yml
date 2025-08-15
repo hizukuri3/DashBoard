@@ -31,10 +31,10 @@ jobs:
               fi
             ;;
             develop)
-              if [[ "$HEAD" == feature/* || "$HEAD" == auto-backmerge-* || "$HEAD" == chore/backmerge* ]]; then
+              if [[ "$HEAD" == feature/* || "$HEAD" == docs/* || "$HEAD" == auto-backmerge-* || "$HEAD" == chore/backmerge* ]]; then
                 echo "✅ Allowed: $HEAD → $BASE"
               else
-                block "Only feature/* (or auto back-merge) may target develop (got: $HEAD)"
+                block "Only feature/*, docs/* (or auto back-merge) may target develop (got: $HEAD)"
               fi
             ;;
             *)
