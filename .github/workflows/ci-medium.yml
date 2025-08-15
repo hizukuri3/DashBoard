@@ -1,8 +1,6 @@
 name: CI Medium (Develop → Release)
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: ["develop"]
 
@@ -11,6 +9,7 @@ permissions:
 
 jobs:
   verify-medium:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with LFS)

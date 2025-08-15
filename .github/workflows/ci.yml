@@ -1,10 +1,7 @@
-name: CI (Legacy - Maintains backward compatibility)
+name: CI (Legacy - Manual)
 
 on:
-  pull_request:
-    branches: [develop, main]
-  push:
-    branches: ["develop", "feature/**", "release/**", "hotfix/**"]
+  workflow_dispatch:
 
 permissions:
   contents: read
