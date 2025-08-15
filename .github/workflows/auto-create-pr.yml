@@ -69,7 +69,7 @@ jobs:
           BODY_FILE="$RUNNER_TEMP/pr_body.md"
           BASE=origin/main
           git fetch origin main --quiet
-          COUNT=$(git.rev-list --count ${BASE}..HEAD)
+          COUNT=$(git rev-list --count ${BASE}..HEAD)
           echo "ahead_commits=${COUNT}" >> $GITHUB_OUTPUT
           if [ "$COUNT" -gt 0 ]; then echo "has_diff=true" >> $GITHUB_OUTPUT; else echo "has_diff=false" >> $GITHUB_OUTPUT; fi
           cat > "$BODY_FILE" <<EOF
