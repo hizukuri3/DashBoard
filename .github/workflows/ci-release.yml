@@ -1,0 +1,42 @@
+name: CI Release (Release → Main)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ["release/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Prettier check (final)
+        run: npx prettier --check "**/*.{js,html,css,md,json}"
+
+      - name: Final syntax check
+        run: |
+          node -c site/assets/app.js
+          echo "✅ Final syntax check passed"
+
+      - name: Release verification
+        run: |
+          test -f site/index.html
+          test -f package.json
+          echo "✅ Release files verified"
