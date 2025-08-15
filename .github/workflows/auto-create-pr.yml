@@ -29,7 +29,7 @@ jobs:
           path: .
           commit-message: |
             Auto-create PR for ${{ github.ref_name }}
-            
+
             - Branch: ${{ github.ref_name }}
             - Commit: ${{ github.sha }}
             - Triggered by: ${{ github.actor }}
@@ -37,24 +37,24 @@ jobs:
             🔄 Auto PR: ${{ github.ref_name }} → main
           body: |
             ## 🤖 Auto-generated Pull Request
-            
+
             **Source Branch:** `${{ github.ref_name }}`
             **Target Branch:** `main`
             **Triggered by:** ${{ github.actor }}
             **Commit:** ${{ github.sha }}
-            
+
             ---
-            
+
             ### 📋 Changes Summary
             This PR was automatically created when changes were pushed to `${{ github.ref_name }}`.
-            
+
             ### ✅ Next Steps
             1. **Review** the changes
             2. **Approve** if everything looks good
             3. **Merge** manually when ready
-            
+
             ---
-            
+
             *This PR was automatically created by GitHub Actions*
           branch: auto-pr-${{ github.ref_name }}-${{ github.run_number }}
           delete-branch: true
