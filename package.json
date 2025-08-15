@@ -1,6 +1,6 @@
 {
   "name": "superstore-dashboard",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "A beautiful dashboard application that fetches data from Tableau data sources",
   "main": "site/index.html",
   "scripts": {
