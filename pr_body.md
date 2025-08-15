@@ -4,6 +4,7 @@
 **Target Branch:** develop
 
 ### 📋 Changes merged to main (ahead of develop)
+
 - dc54061 Merge pull request #18 from hizukuri3/feature/ci-cd-workflow-improvements
 - cd8ebdd fix(ci): grant issues:write to allow label assignment in auto PR workflow
 - 35fd6b6 feat(ci): auto-create PRs with diff bodies
