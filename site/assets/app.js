@@ -1379,20 +1379,24 @@ function renderRegionCharts(regionData) {
   });
 
   // 地域別利益分布チャート
-  const profitChart = echarts.init(document.getElementById('region-profit-chart'));
+  const profitChart = echarts.init(
+    document.getElementById("region-profit-chart"),
+  );
   profitChart.setOption({
-		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        legend: { data: ['Profit'], top: 8 },
-        grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
-        xAxis: { type: 'category', data: regions.map(r => r.name) },
-        yAxis: { type: 'value', name: '利益' },
-        series: [{
-            name: 'Profit',
-            type: 'bar',
-            data: regions.map(r => r.profit),
-            itemStyle: { color: '#8B5CF6' }
-        }]
-    });
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    legend: { data: ["Profit"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
+    xAxis: { type: "category", data: regions.map((r) => r.name) },
+    yAxis: { type: "value", name: "利益" },
+    series: [
+      {
+        name: "Profit",
+        type: "bar",
+        data: regions.map((r) => r.profit),
+        itemStyle: { color: "#8B5CF6" },
+      },
+    ],
+  });
 
   // 地域別配送パフォーマンスチャート
   const shippingChart = echarts.init(
