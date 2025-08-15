@@ -1496,6 +1496,7 @@ function renderRegionCharts(regionData) {
   const profitChart = echarts.init(
     document.getElementById("region-profit-chart"),
   );
+  registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Profit"], top: 8 },
