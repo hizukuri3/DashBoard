@@ -1461,11 +1461,13 @@ function renderRegionCharts(regionData) {
   registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    grid: { left: 48, right: 56, top: 40, bottom: 36, containLabel: true },
+    legend: { data: ["Profit"], top: 8 },
+    grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: regions.map((r) => r.name) },
     yAxis: { type: "value", name: "Profit" },
     series: [
       {
+        name: "Profit",
         type: "bar",
         data: regions.map((r) => r.profit),
         itemStyle: { color: "#8B5CF6" },
