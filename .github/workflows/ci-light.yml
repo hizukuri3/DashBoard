@@ -4,7 +4,7 @@ on:
   push:
     branches: ["feature/**"]
   pull_request:
-    branches: ["develop", "main"]
+    branches: ["develop"]
 
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
         run: npm i
 
       - name: Block feature -> main PRs (safety)
-        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'feature/')
         run: |
           echo "Blocking feature -> main: use feature->develop->release->main." >&2
           exit 1
