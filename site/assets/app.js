@@ -1456,15 +1456,13 @@ function renderRegionCharts(regionData) {
   // 地域別利益分布チャート
   const profitChart = echarts.init(
     document.getElementById("region-profit-chart"),
-    "dashboard",
   );
-  registerChartInstance(profitChart);
   profitChart.setOption({
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: { data: ["Profit"], top: 8 },
     grid: { left: 48, right: 56, top: 64, bottom: 36, containLabel: true },
     xAxis: { type: "category", data: regions.map((r) => r.name) },
-    yAxis: { type: "value", name: "Profit" },
+    yAxis: { type: "value", name: "利益" },
     series: [
       {
         name: "Profit",
