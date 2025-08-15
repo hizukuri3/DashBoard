@@ -6,10 +6,12 @@ on:
       - "feature/**"
       - "release/**"
       - "hotfix/**"
+      - "main"
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   create-pr:
@@ -21,41 +23,37 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Create PR to develop (from feature/*)
+      # -------- feature/* -> develop --------
+      - name: Compute diff (feature -> develop)
         if: startsWith(github.ref, 'refs/heads/feature/')
+        id: diff_feature
+        run: |
+          BODY_FILE="$RUNNER_TEMP/pr_body.md"
+          BASE=origin/develop
+          git fetch origin develop --quiet
+          COUNT=$(git rev-list --count ${BASE}..HEAD)
+          echo "ahead_commits=${COUNT}" >> $GITHUB_OUTPUT
+          if [ "$COUNT" -gt 0 ]; then echo "has_diff=true" >> $GITHUB_OUTPUT; else echo "has_diff=false" >> $GITHUB_OUTPUT; fi
+          cat > "$BODY_FILE" <<EOF
+          ## 🤖 Auto-generated Pull Request
+
+          **Source Branch:** ${GITHUB_REF_NAME}
+          **Target Branch:** develop
+
+          ### 📋 Changes Summary (ahead of develop)
+          $(git log --pretty=format:'- %h %s' ${BASE}..HEAD)
+          EOF
+          echo "body_file=$BODY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create PR to develop (from feature/*)
+        if: startsWith(github.ref, 'refs/heads/feature/') && steps.diff_feature.outputs.has_diff == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: .
-          commit-message: |
-            Auto-create PR for ${{ github.ref_name }}
-            
-            - Branch: ${{ github.ref_name }}
-            - Commit: ${{ github.sha }}
-            - Triggered by: ${{ github.actor }}
           title: |
             🔄 Auto PR: ${{ github.ref_name }} → develop
-          body: |
-            ## 🤖 Auto-generated Pull Request
-            
-            **Source Branch:** `${{ github.ref_name }}`
-            **Target Branch:** `develop`
-            **Triggered by:** ${{ github.actor }}
-            **Commit:** ${{ github.sha }}`
-            
-            ---
-            
-            ### 📋 Changes Summary
-            This PR was automatically created when changes were pushed to `${{ github.ref_name }}`.
-            
-            ### ✅ Next Steps
-            1. **Review** the changes
-            2. **Approve** if everything looks good
-            3. **Merge** manually when ready
-            
-            ---
-            
-            *This PR was automatically created by GitHub Actions*
+          body-path: ${{ steps.diff_feature.outputs.body_file }}
           branch: auto-pr-${{ github.ref_name }}-${{ github.run_number }}
           delete-branch: true
           base: develop
@@ -63,44 +61,79 @@ jobs:
             auto-generated
             needs-review
 
-      - name: Create PR to main (from release/* or hotfix/*)
+      # -------- release/*, hotfix/* -> main --------
+      - name: Compute diff (release/hotfix -> main)
         if: startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
+        id: diff_rel
+        run: |
+          BODY_FILE="$RUNNER_TEMP/pr_body.md"
+          BASE=origin/main
+          git fetch origin main --quiet
+          COUNT=$(git.rev-list --count ${BASE}..HEAD)
+          echo "ahead_commits=${COUNT}" >> $GITHUB_OUTPUT
+          if [ "$COUNT" -gt 0 ]; then echo "has_diff=true" >> $GITHUB_OUTPUT; else echo "has_diff=false" >> $GITHUB_OUTPUT; fi
+          cat > "$BODY_FILE" <<EOF
+          ## 🤖 Auto-generated Pull Request
+
+          **Source Branch:** ${GITHUB_REF_NAME}
+          **Target Branch:** main
+
+          ### 📋 Changes Summary (ahead of main)
+          $(git log --pretty=format:'- %h %s' ${BASE}..HEAD)
+          EOF
+          echo "body_file=$BODY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create PR to main (from release/* or hotfix/*)
+        if: (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && steps.diff_rel.outputs.has_diff == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: .
-          commit-message: |
-            Auto-create PR for ${{ github.ref_name }}
-
-            - Branch: ${{ github.ref_name }}
-            - Commit: ${{ github.sha }}
-            - Triggered by: ${{ github.actor }}
           title: |
             🔄 Auto PR: ${{ github.ref_name }} → main
-          body: |
-            ## 🤖 Auto-generated Pull Request
-
-            **Source Branch:** `${{ github.ref_name }}`
-            **Target Branch:** `main`
-            **Triggered by:** ${{ github.actor }}
-            **Commit:** ${{ github.sha }}
-
-            ---
-
-            ### 📋 Changes Summary
-            This PR was automatically created when changes were pushed to `${{ github.ref_name }}`.
-
-            ### ✅ Next Steps
-            1. **Review** the changes
-            2. **Approve** if everything looks good
-            3. **Merge** manually when ready
-
-            ---
-
-            *This PR was automatically created by GitHub Actions*
+          body-path: ${{ steps.diff_rel.outputs.body_file }}
           branch: auto-pr-${{ github.ref_name }}-${{ github.run_number }}
           delete-branch: true
           base: main
           labels: |
             auto-generated
+            needs-review
+
+      # -------- main -> develop (back-merge after release/hotfix) --------
+      - name: Compute diff (main -> develop)
+        if: github.ref == 'refs/heads/main'
+        id: diff_back
+        run: |
+          BODY_FILE="$RUNNER_TEMP/pr_body.md"
+          BASE=origin/develop
+          git fetch origin develop --quiet
+          COUNT=$(git rev-list --count ${BASE}..HEAD)
+          echo "ahead_commits=${COUNT}" >> $GITHUB_OUTPUT
+          if [ "$COUNT" -gt 0 ]; then echo "has_diff=true" >> $GITHUB_OUTPUT; else echo "has_diff=false" >> $GITHUB_OUTPUT; fi
+          cat > "$BODY_FILE" <<EOF
+          ## 🔁 Back-merge PR (Auto)
+
+          **Source Branch:** main
+          **Target Branch:** develop
+
+          ### 📋 Changes merged to main (ahead of develop)
+          $(git log --pretty=format:'- %h %s' ${BASE}..HEAD)
+          EOF
+          echo "body_file=$BODY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create PR to develop (back-merge main → develop)
+        if: github.ref == 'refs/heads/main' && steps.diff_back.outputs.has_diff == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+          title: |
+            🔁 Back-merge: main → develop
+          body-path: ${{ steps.diff_back.outputs.body_file }}
+          branch: auto-backmerge-main-to-develop-${{ github.run_number }}
+          delete-branch: true
+          base: develop
+          labels: |
+            auto-generated
+            back-merge
             needs-review
