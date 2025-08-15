@@ -1,401 +1,895 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Superstore BI Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
-        .page { display: none; }
-        .page.active { display: block; }
-        .nav-item.active { 
-            background-color: rgb(59 130 246); 
-            color: white; 
+      :root {
+        --bg: #f9fafb;
+        --card: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+        --primary: #2563eb;
+        --accent: #4f46e5;
+        --success: #10b981;
+        --warn: #f59e0b;
+        --error: #ef4444;
+        --radius-card: 8px;
+        --radius-ctrl: 6px;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+      * {
+        font-variant-numeric: tabular-nums;
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+      .nav-item.active {
+        background-color: rgb(59 130 246);
+        color: white;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-sm);
+      }
+      .ellipsis {
+        display: inline-block;
+        max-width: 12rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      .chart {
+        height: 320px;
+        width: 100%;
+      }
+      @media (min-width: 768px) {
+        .chart {
+          height: 360px;
         }
+      }
+      .data-table tbody tr:nth-child(odd) {
+        background-color: #fafafb;
+      }
+      .data-table tbody tr:hover {
+        background-color: #f9fafb;
+      }
     </style>
-</head>
-<body class="bg-gray-50">
+  </head>
+  <body class="bg-gray-50">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md"
+      >Skip to content</a
+    >
     <!-- ヘッダー -->
     <header class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <h1 class="text-2xl font-bold text-gray-900">Superstore BI Dashboard</h1>
-                <div class="text-sm text-gray-500">
-                    <span id="last-updated">最終更新: --</span>
-                </div>
-            </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <h1 class="text-2xl font-bold text-gray-900">
+            Superstore BI Dashboard
+          </h1>
+          <div class="text-sm text-gray-500">
+            <span id="last-updated">Last updated: --</span>
+          </div>
         </div>
+      </div>
     </header>
 
-    <!-- 期間フィルタリング -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700">期間フィルター:</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="date" id="start-date" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <span class="text-gray-500">〜</span>
-                        <input type="date" id="end-date" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <button id="apply-filter" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        適用
-                    </button>
-                    <button id="reset-filter" class="px-3 py-2 text-gray-600 text-sm font-medium hover:text-gray-800 focus:outline-none">
-                        リセット
-                    </button>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">表示件数:</span>
-                    <select id="page-size" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="50">50件</option>
-                        <option value="100">100件</option>
-                        <option value="200">200件</option>
-                        <option value="all">全件</option>
-                    </select>
-                </div>
-            </div>
+    <!-- ツールバー（主要コントロール） -->
+    <div class="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center space-x-2 md:hidden">
+            <label for="page-select-mobile" class="text-sm text-gray-600"
+              >Page</label
+            >
+            <select
+              id="page-select-mobile"
+              class="px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="overview">Overview</option>
+              <option value="geography">Geography</option>
+              <option value="products">Products</option>
+              <option value="customers">Customers</option>
+              <option value="time">Time</option>
+              <option value="operations">Operations</option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-3"></div>
         </div>
+      </div>
     </div>
 
-    <!-- ナビゲーション -->
-    <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex space-x-1 overflow-x-auto">
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active" data-page="overview">
-                    オーバービュー
-                </button>
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="geography">
-                    地域分析
-                </button>
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="products">
-                    製品分析
-                </button>
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="customers">
-                    顧客分析
-                </button>
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="time">
-                    時間分析
-                </button>
-                <button class="nav-item px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" data-page="operations">
-                    配送・運営
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- 左ペイン付きレイアウト -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+      <!-- サイドナビ（md以上で表示） -->
+      <aside class="hidden md:block w-60 flex-shrink-0">
+        <div class="card p-3 sticky top-20 space-y-3 overflow-hidden">
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="overview"
+            role="tab"
+            aria-controls="overview"
+            aria-selected="true"
+          >
+            Overview
+          </button>
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="geography"
+            role="tab"
+            aria-controls="geography"
+            aria-selected="false"
+          >
+            Geography
+          </button>
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="products"
+            role="tab"
+            aria-controls="products"
+            aria-selected="false"
+          >
+            Products
+          </button>
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="customers"
+            role="tab"
+            aria-controls="customers"
+            aria-selected="false"
+          >
+            Customers
+          </button>
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="time"
+            role="tab"
+            aria-controls="time"
+            aria-selected="false"
+          >
+            Time
+          </button>
+          <button
+            class="nav-item w-full text-left px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-page="operations"
+            role="tab"
+            aria-controls="operations"
+            aria-selected="false"
+          >
+            Operations
+          </button>
 
-    <!-- メインコンテンツ -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <!-- フィルター（左ペイン） -->
+          <div class="pt-2 border-t border-gray-200"></div>
+          <div>
+            <h4 class="text-xs font-semibold text-gray-500 mb-2">Filters</h4>
+            <div class="space-y-2">
+              <label class="text-xs text-gray-600">Date range</label>
+              <div class="grid grid-cols-12 gap-2">
+                <input
+                  type="date"
+                  id="start-date"
+                  class="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 col-span-6"
+                />
+                <input
+                  type="date"
+                  id="end-date"
+                  class="w-full px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 col-span-6"
+                />
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  id="apply-filter"
+                  class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none"
+                >
+                  Apply
+                </button>
+                <button
+                  id="reset-filter"
+                  class="px-3 py-2 text-gray-600 text-sm font-medium hover:text-gray-800 focus:outline-none"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- メインコンテンツ -->
+      <main class="flex-1" id="main">
         <!-- オーバービューページ -->
         <div id="overview" class="page active">
+          <div class="max-w-5xl mx-auto">
             <!-- KPI セクション -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900">総売上</h3>
-                    <p class="text-3xl font-bold text-blue-600" id="total-sales">--</p>
-                    <p class="text-sm text-gray-500">前年同期比: <span id="sales-yoy">--</span></p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900">総利益</h3>
-                    <p class="text-3xl font-bold text-green-600" id="total-profit">--</p>
-                    <p class="text-sm text-gray-500">前年同期比: <span id="profit-yoy">--</span></p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900">注文数</h3>
-                    <p class="text-3xl font-bold text-purple-600" id="total-orders">--</p>
-                    <p class="text-sm text-gray-500">前年同期比: <span id="orders-yoy">--</span></p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900">利益率</h3>
-                    <p class="text-3xl font-bold text-orange-600" id="profit-margin">--</p>
-                    <p class="text-sm text-gray-500">前年同期比: <span id="margin-yoy">--</span></p>
-                </div>
+            <div class="grid grid-cols-12 gap-6 mb-8">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
+                <p class="text-3xl font-bold text-blue-600" id="total-sales">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="sales-yoy">--</span>
+                </p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">Total Profit</h3>
+                <p class="text-3xl font-bold text-green-600" id="total-profit">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="profit-yoy">--</span>
+                </p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">Orders</h3>
+                <p class="text-3xl font-bold text-purple-600" id="total-orders">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="orders-yoy">--</span>
+                </p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">Profit Margin</h3>
+                <p
+                  class="text-3xl font-bold text-orange-600"
+                  id="profit-margin"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">
+                  YoY: <span id="margin-yoy">--</span>
+                </p>
+              </div>
             </div>
 
             <!-- チャートセクション -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">月次売上・利益トレンド</h3>
-                    <div id="monthly-trend-chart" class="h-80"></div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">地域別売上分布</h3>
-                    <div id="geography-chart" class="h-80"></div>
-                </div>
+            <div class="grid grid-cols-12 gap-6 mb-8">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Monthly Sales & Profit
+                </h3>
+                <div
+                  id="monthly-trend-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Sales by Region
+                </h3>
+                <div
+                  id="geography-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">カテゴリ別売上・利益</h3>
-                    <div id="category-chart" class="h-80"></div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">顧客セグメント別分布</h3>
-                    <div id="segment-chart" class="h-80"></div>
-                </div>
+            <div class="grid grid-cols-12 gap-6 mb-8">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Sales & Orders by Category
+                </h3>
+                <div
+                  id="category-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Customer Segment Distribution
+                </h3>
+                <div
+                  id="segment-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
             </div>
 
             <!-- 全データ表示セクション -->
             <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-medium text-gray-900">全データ一覧</h3>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">総件数: <span id="total-records" class="font-medium">--</span></span>
-                        <span class="text-sm text-gray-500">表示件数: <span id="displayed-records" class="font-medium">--</span></span>
-                    </div>
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">All Records</h3>
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm text-gray-500"
+                    >Total:
+                    <span id="total-records" class="font-medium">--</span></span
+                  >
+                  <span class="text-sm text-gray-500"
+                    >Showing:
+                    <span id="displayed-records" class="font-medium"
+                      >--</span
+                    ></span
+                  >
                 </div>
-                
-                <!-- データテーブル -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="date">
-                                    日付 <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="category">
-                                    カテゴリ <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="segment">
-                                    セグメント <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="value">
-                                    売上 <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="profit">
-                                    利益 <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="quantity">
-                                    数量 <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="region">
-                                    地域 <span class="sort-indicator">▼</span>
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="shipping_mode">
-                                    配送モード <span class="sort-indicator">▼</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="data-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- データはJavaScriptで動的に生成 -->
-                        </tbody>
-                    </table>
+              </div>
+
+              <!-- データテーブル -->
+              <div class="overflow-x-auto">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-sm text-gray-500">
+                    Total:
+                    <span id="total-records" class="font-medium">--</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">Page size:</span>
+                    <select
+                      id="page-size"
+                      class="px-2 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                      <option value="all">All</option>
+                    </select>
+                  </div>
                 </div>
-                
-                <!-- ページネーション -->
-                <div class="flex items-center justify-between mt-6">
-                    <div class="flex items-center space-x-2">
-                        <button id="prev-page" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                            前へ
-                        </button>
-                        <span class="text-sm text-gray-700">
-                            ページ <span id="current-page">1</span> / <span id="total-pages">1</span>
-                        </span>
-                        <button id="next-page" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                            次へ
-                        </button>
-                    </div>
-                    <div class="text-sm text-gray-500">
-                        <span id="page-info">1-50件を表示</span>
-                    </div>
+                <table
+                  class="min-w-full divide-y divide-gray-200 table-fixed"
+                  style="table-layout: fixed"
+                >
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="sticky left-0 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="date"
+                        style="z-index: 1; max-width: 160px"
+                      >
+                        Date <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="category"
+                        style="z-index: 1; max-width: 200px"
+                      >
+                        Category <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="segment"
+                      >
+                        Segment <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="value"
+                      >
+                        <span class="ellipsis" title="Sales">Sales</span>
+                        <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="profit"
+                      >
+                        <span class="ellipsis" title="Profit">Profit</span>
+                        <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="quantity"
+                      >
+                        <span class="ellipsis" title="Quantity">Quantity</span>
+                        <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="region"
+                      >
+                        <span class="ellipsis" title="Region">Region</span>
+                        <span class="sort-indicator">▼</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        data-sort="shipping_mode"
+                      >
+                        <span class="ellipsis" title="Ship Mode"
+                          >Ship Mode</span
+                        >
+                        <span class="sort-indicator">▼</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="data-table-body"
+                    class="bg-white divide-y divide-gray-200"
+                  >
+                    <!-- データはJavaScriptで動的に生成 -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- ページネーション -->
+              <div class="flex items-center justify-between mt-6">
+                <div class="flex items-center space-x-2">
+                  <button
+                    id="prev-page"
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Prev
+                  </button>
+                  <span class="text-sm text-gray-700">
+                    Page <span id="current-page">1</span> /
+                    <span id="total-pages">1</span>
+                  </span>
+                  <button
+                    id="next-page"
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
                 </div>
+                <div class="text-sm text-gray-500">
+                  <span id="page-info">Showing 1-50</span>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
 
-        <!-- 地域分析ページ -->
+        <!-- Geography page -->
         <div id="geography" class="page">
-            <div class="space-y-6">
-                <!-- 地域別KPI -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">総地域数</h3>
-                        <p class="text-3xl font-bold text-blue-600" id="total-regions">--</p>
-                        <p class="text-sm text-gray-500">アクティブな地域</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">最高売上地域</h3>
-                        <p class="text-3xl font-bold text-green-600" id="top-region-sales">--</p>
-                        <p class="text-sm text-gray-500" id="top-region-name">--</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">最高利益地域</h3>
-                        <p class="text-3xl font-bold text-purple-600" id="top-region-profit">--</p>
-                        <p class="text-sm text-gray-500" id="top-region-profit-name">--</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">平均配送日数</h3>
-                        <p class="text-3xl font-bold text-orange-600" id="avg-shipping-days">--</p>
-                        <p class="text-sm text-gray-500">地域別平均</p>
-                    </div>
-                </div>
-
-                <!-- チャートセクション -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">地域別売上分布</h3>
-                        <div id="region-sales-chart" class="h-80"></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">地域別利益分布</h3>
-                        <div id="region-profit-chart" class="h-80"></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">地域別配送パフォーマンス</h3>
-                        <div id="region-shipping-chart" class="h-80"></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">地域別顧客セグメント分布</h3>
-                        <div id="region-segment-chart" class="h-80"></div>
-                    </div>
-                </div>
-
-                <!-- 地域別詳細テーブル -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">地域別詳細データ</h3>
-                        <div class="flex items-center space-x-2">
-                            <label class="text-sm text-gray-500">地域フィルター:</label>
-                            <select id="region-filter" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">全地域</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">地域</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">州</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">売上</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">利益</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注文数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平均配送日数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主要カテゴリ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="region-table-body" class="bg-white divide-y divide-gray-200">
-                                <!-- データはJavaScriptで動的に生成 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="max-w-5xl mx-auto space-y-6">
+            <!-- 地域別KPI -->
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">Total Regions</h3>
+                <p class="text-3xl font-bold text-blue-600" id="total-regions">
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Active regions</p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Top Sales Region
+                </h3>
+                <p
+                  class="text-3xl font-bold text-green-600"
+                  id="top-region-sales"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500" id="top-region-name">--</p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Top Profit Region
+                </h3>
+                <p
+                  class="text-3xl font-bold text-purple-600"
+                  id="top-region-profit"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500" id="top-region-profit-name">
+                  --
+                </p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Avg Shipping Days
+                </h3>
+                <p
+                  class="text-3xl font-bold text-orange-600"
+                  id="avg-shipping-days"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Regional average</p>
+              </div>
             </div>
+
+            <!-- Charts section -->
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Sales by Region
+                </h3>
+                <div
+                  id="region-sales-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Profit by Region
+                </h3>
+                <div
+                  id="region-profit-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Shipping Performance by Region
+                </h3>
+                <div
+                  id="region-shipping-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Customer Segment by Region
+                </h3>
+                <div
+                  id="region-segment-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Region detail table -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">
+                  Region Details
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <label class="text-sm text-gray-500">Region filter:</label>
+                  <select
+                    id="region-filter"
+                    class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All regions</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table
+                  class="min-w-full divide-y divide-gray-200"
+                  style="table-layout: fixed"
+                >
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Region">Region</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="State">State</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Sales">Sales</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Profit">Profit</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Orders">Orders</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Avg Ship Days"
+                          >Avg Ship Days</span
+                        >
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Top Category"
+                          >Top Category</span
+                        >
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="region-table-body"
+                    class="bg-white divide-y divide-gray-200"
+                  >
+                    <!-- データはJavaScriptで動的に生成 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- 製品分析ページ -->
+        <!-- Products page -->
         <div id="products" class="page">
+          <div class="max-w-5xl mx-auto">
             <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">製品分析</h2>
-                <p class="text-gray-600">製品カテゴリの詳細分析を表示します</p>
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Products</h2>
+              <p class="text-gray-600">Detailed analysis by product category</p>
             </div>
+          </div>
         </div>
 
-        <!-- 顧客分析ページ -->
+        <!-- Customers page -->
         <div id="customers" class="page">
+          <div class="max-w-5xl mx-auto">
             <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">顧客分析</h2>
-                <p class="text-gray-600">顧客セグメントの詳細分析を表示します</p>
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Customers</h2>
+              <p class="text-gray-600">Detailed analysis by customer segment</p>
             </div>
+          </div>
         </div>
 
-        <!-- 時間分析ページ -->
+        <!-- Time page -->
         <div id="time" class="page">
+          <div class="max-w-5xl mx-auto">
             <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">時間分析</h2>
-                <p class="text-gray-600">時間軸での詳細分析を表示します</p>
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Time</h2>
+              <p class="text-gray-600">Detailed analysis over time</p>
             </div>
+          </div>
         </div>
 
-        <!-- 配送・運営ページ -->
+        <!-- Operations page -->
         <div id="operations" class="page">
-            <div class="space-y-6">
-                <!-- 配送・運営KPI -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">総配送件数</h3>
-                        <p class="text-3xl font-bold text-blue-600" id="total-shipping-orders">--</p>
-                        <p class="text-sm text-gray-500">配送可能な注文</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">平均配送日数</h3>
-                        <p class="text-3xl font-bold text-green-600" id="avg-shipping-days-ops">--</p>
-                        <p class="text-sm text-gray-500">全配送の平均</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">総配送コスト</h3>
-                        <p class="text-3xl font-bold text-purple-600" id="total-shipping-cost">--</p>
-                        <p class="text-sm text-gray-500">配送費用合計</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900">最速配送モード</h3>
-                        <p class="text-3xl font-bold text-orange-600" id="fastest-shipping-mode">--</p>
-                        <p class="text-sm text-gray-500">平均日数最短</p>
-                    </div>
-                </div>
-
-                <!-- チャートセクション -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">配送モード別売上・件数</h3>
-                        <div id="shipping-mode-chart" class="h-80"></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">配送モード別配送日数</h3>
-                        <div id="shipping-days-chart" class="h-80"></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">配送コスト分析</h3>
-                        <div id="shipping-cost-chart" class="h-80"></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">地域別配送パフォーマンス</h3>
-                        <div id="region-shipping-performance-chart" class="h-80"></div>
-                    </div>
-                </div>
-
-                <!-- 配送詳細テーブル -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">配送詳細データ</h3>
-                        <div class="flex items-center space-x-2">
-                            <label class="text-sm text-gray-500">配送モードフィルター:</label>
-                            <select id="shipping-mode-filter" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">全配送モード</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">配送モード</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">件数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">売上</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">利益</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平均配送日数</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">総配送コスト</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主要カテゴリ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="shipping-table-body" class="bg-white divide-y divide-gray-200">
-                                <!-- データはJavaScriptで動的に生成 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="max-w-5xl mx-auto space-y-6">
+            <!-- タイトルと説明文を追加 -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Operations</h2>
+              <p class="text-gray-600">Shipping and logistics analysis</p>
             </div>
-        </div>
-    </main>
+            
+            <!-- Operations KPIs -->
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Total Shipments
+                </h3>
+                <p
+                  class="text-3xl font-bold text-blue-600"
+                  id="total-shipping-orders"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Orders with shipping</p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Avg Shipping Days
+                </h3>
+                <p
+                  class="text-3xl font-bold text-green-600"
+                  id="avg-shipping-days-ops"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Overall average</p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Total Shipping Cost
+                </h3>
+                <p
+                  class="text-3xl font-bold text-purple-600"
+                  id="total-shipping-cost"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Total of shipping fees</p>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-3"
+              >
+                <h3 class="text-lg font-medium text-gray-900">
+                  Fastest Ship Mode
+                </h3>
+                <p
+                  class="text-3xl font-bold text-orange-600"
+                  id="fastest-shipping-mode"
+                >
+                  --
+                </p>
+                <p class="text-sm text-gray-500">Shortest avg days</p>
+              </div>
+            </div>
 
-    <script src="assets/app.js?v=enhanced-latest-1"></script>
-</body>
+            <!-- Charts section -->
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Sales & Orders by Ship Mode
+                </h3>
+                <div
+                  id="shipping-mode-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Shipping Days by Mode
+                </h3>
+                <div
+                  id="shipping-days-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6">
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Shipping Cost Analysis
+                </h3>
+                <div
+                  id="shipping-cost-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+              <div
+                class="bg-white rounded-lg shadow p-6 col-span-12 md:col-span-6"
+              >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                  Shipping Performance by Region
+                </h3>
+                <div
+                  id="region-shipping-performance-chart"
+                  class="chart"
+                  style="height: 320px"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Shipping detail table -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">
+                  Shipping Details
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <label class="text-sm text-gray-500">Ship mode filter:</label>
+                  <select
+                    id="shipping-mode-filter"
+                    class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All ship modes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table
+                  class="min-w-full divide-y divide-gray-200"
+                  style="table-layout: fixed"
+                >
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Ship Mode"
+                          >Ship Mode</span
+                        >
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Orders">Orders</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Sales">Sales</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Profit">Profit</span>
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Avg Ship Days"
+                          >Avg Ship Days</span
+                        >
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Total Ship Cost"
+                          >Total Ship Cost</span
+                        >
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        <span class="ellipsis" title="Top Category"
+                          >Top Category</span
+                        >
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="shipping-table-body"
+                    class="bg-white divide-y divide-gray-200"
+                  >
+                    <!-- データはJavaScriptで動的に生成 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="assets/app.js?v=feature-grid-1"></script>
+  </body>
 </html>

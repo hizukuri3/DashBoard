@@ -1,0 +1,72 @@
+name: Deploy Pages
+
+on:
+  push:
+    branches:
+      - "release/**"
+      - "hotfix/**"
+  pull_request:
+    branches:
+      - "release/**"
+      - "hotfix/**"
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'push'
+      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (push)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Checkout (merged PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Prettier check (gate)
+        run: npx prettier --check "**/*.{js,html,css,md,json}"
+
+      - name: Verify site
+        run: |
+          ls -la site
+          test -f site/index.html
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -31,23 +31,26 @@ Superstore Dashboardは、Tableauデータソースからデータを取得し�
 ### インストール
 
 1. リポジトリをクローン
+
 ```bash
 git clone https://github.com/hizukuri3/SuperstoreDashboard.git
 cd SuperstoreDashboard
 ```
 
 2. 依存関係のインストール
+
 ```bash
 npm install
 ```
 
 3. 設定ファイルの作成
+
 ```bash
 cp site/config.example.json site/config.json
 ```
 
 4. 設定ファイルの編集
-`site/config.json`を開いて、Tableauの設定を入力してください。
+   `site/config.json`を開いて、Tableauの設定を入力してください。
 
 ### 開発サーバーの起動
 
@@ -136,6 +139,7 @@ export TABLEAU_PASSWORD="your-password"
 ### 開発手順
 
 1. `develop`ブランチから新しい機能ブランチを作成
+
 ```bash
 git checkout develop
 git checkout -b feature/新機能名

@@ -1,9 +1,7 @@
 {
-  "dataEndpoint": "https://your-tableau-mcp-endpoint.example.com/data", 
+  "dataEndpoint": "https://your-tableau-mcp-endpoint.example.com/data",
   "auth": {
     "headerName": "Authorization",
     "headerValue": "Bearer YOUR_TOKEN_IF_NEEDED"
   }
 }
-
-
