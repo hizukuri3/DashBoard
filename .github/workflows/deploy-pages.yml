@@ -9,8 +9,6 @@ on:
   pull_request:
     branches:
       - "main"
-      - "release/**"
-      - "hotfix/**"
     types: [closed]
   workflow_dispatch:
 
@@ -27,7 +25,7 @@ jobs:
   deploy:
     if: >-
       github.event_name == 'push'
-      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+      || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'main')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
