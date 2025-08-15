@@ -1,0 +1,43 @@
+name: Branch Policy Guards
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce branch merge policy
+        run: |
+          BASE="${{ github.base_ref }}"
+          HEAD="${{ github.head_ref }}"
+          echo "Base: $BASE, Head: $HEAD"
+
+          block() {
+            echo "❌ Blocked by branch policy: $1" >&2
+            exit 1
+          }
+
+          case "$BASE" in
+            main)
+              if [[ "$HEAD" == release/* || "$HEAD" == hotfix/* ]]; then
+                echo "✅ Allowed: $HEAD → $BASE"
+              else
+                block "Only release/* or hotfix/* may target main (got: $HEAD)"
+              fi
+            ;;
+            develop)
+              if [[ "$HEAD" == feature/* || "$HEAD" == docs/* || "$HEAD" == auto-backmerge-* || "$HEAD" == chore/backmerge* ]]; then
+                echo "✅ Allowed: $HEAD → $BASE"
+              else
+                block "Only feature/*, docs/* (or auto back-merge) may target develop (got: $HEAD)"
+              fi
+            ;;
+            *)
+              echo "ℹ️ No guard for base: $BASE"
+            ;;
+          esac

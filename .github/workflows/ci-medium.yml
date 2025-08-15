@@ -32,8 +32,14 @@ jobs:
       - name: Design system lint
         run: npm run -s lint:design
 
-      - name: Visual regression tests (quick)
-        run: npm run test:quick
+      - name: Visual regression tests (quick - conditional)
+        shell: bash
+        run: |
+          if [ -d tests/visual ] && find tests/visual -type f -name "*spec.*" | grep -q .; then
+            npm run test:quick
+          else
+            echo "No visual tests found. Skipping."
+          fi
 
       - name: Sanity check - site exists
         run: |

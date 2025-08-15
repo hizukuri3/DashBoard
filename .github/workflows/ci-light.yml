@@ -3,6 +3,8 @@ name: CI Light (Feature → Develop)
 on:
   push:
     branches: ["feature/**"]
+  pull_request:
+    branches: ["develop"]
 
 permissions:
   contents: read
@@ -24,6 +26,12 @@ jobs:
 
       - name: Install dependencies
         run: npm i
+
+      - name: Block feature -> main PRs (safety)
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'feature/')
+        run: |
+          echo "Blocking feature -> main: use feature->develop->release->main." >&2
+          exit 1
 
       - name: Prettier check (light)
         run: npx prettier --check "**/*.{js,html,css,md,json}"
