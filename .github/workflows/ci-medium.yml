@@ -1,13 +1,15 @@
-name: CI (Legacy - Manual)
+name: CI Medium (Develop → Release)
 
 on:
-  workflow_dispatch:
+  push:
+    branches: ["develop"]
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  verify-medium:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with LFS)
@@ -29,6 +31,9 @@ jobs:
 
       - name: Design system lint
         run: npm run -s lint:design
+
+      - name: Visual regression tests (quick)
+        run: npm run test:quick
 
       - name: Sanity check - site exists
         run: |
