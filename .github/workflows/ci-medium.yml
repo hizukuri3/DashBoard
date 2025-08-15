@@ -1,16 +1,16 @@
-name: CI (Legacy - Maintains backward compatibility)
+name: CI Medium (Develop → Release)
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
   push:
-    branches: ["develop", "feature/**", "release/**", "hotfix/**"]
+    branches: ["develop"]
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  verify-medium:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with LFS)
@@ -32,6 +32,9 @@ jobs:
 
       - name: Design system lint
         run: npm run -s lint:design
+
+      - name: Visual regression tests (quick)
+        run: npm run test:quick
 
       - name: Sanity check - site exists
         run: |
