@@ -3,7 +3,6 @@ name: Auto Create Pull Request
 on:
   push:
     branches:
-      - "develop"
       - "feature/**"
       - "release/**"
       - "hotfix/**"
@@ -22,7 +21,50 @@ jobs:
           lfs: true
           fetch-depth: 0
 
-      - name: Create Pull Request
+      - name: Create PR to develop (from feature/*)
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+          commit-message: |
+            Auto-create PR for ${{ github.ref_name }}
+            
+            - Branch: ${{ github.ref_name }}
+            - Commit: ${{ github.sha }}
+            - Triggered by: ${{ github.actor }}
+          title: |
+            🔄 Auto PR: ${{ github.ref_name }} → develop
+          body: |
+            ## 🤖 Auto-generated Pull Request
+            
+            **Source Branch:** `${{ github.ref_name }}`
+            **Target Branch:** `develop`
+            **Triggered by:** ${{ github.actor }}
+            **Commit:** ${{ github.sha }}`
+            
+            ---
+            
+            ### 📋 Changes Summary
+            This PR was automatically created when changes were pushed to `${{ github.ref_name }}`.
+            
+            ### ✅ Next Steps
+            1. **Review** the changes
+            2. **Approve** if everything looks good
+            3. **Merge** manually when ready
+            
+            ---
+            
+            *This PR was automatically created by GitHub Actions*
+          branch: auto-pr-${{ github.ref_name }}-${{ github.run_number }}
+          delete-branch: true
+          base: develop
+          labels: |
+            auto-generated
+            needs-review
+
+      - name: Create PR to main (from release/* or hotfix/*)
+        if: startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
